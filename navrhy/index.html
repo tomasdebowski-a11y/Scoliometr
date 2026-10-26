@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skoliometr – návrhy ergonomie</title>
+<style>
+body{margin:0;background:#EDF2F3;color:#0F2329;font:16px/1.5 -apple-system,Helvetica,Arial,sans-serif}
+.w{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:24px;line-height:1.2;margin:8px 0 4px}
+h2{font-size:19px;margin:28px 0 8px}
+h3{font-size:16px;margin:20px 0 6px;color:#0A6C76}
+p,li{margin:0 0 8px}
+ul,ol{padding-left:22px;margin:0 0 8px}
+img{width:100%;height:auto;border:1px solid #C9D6D9;border-radius:10px;background:#fff;display:block;margin:8px 0}
+.muted{color:#56696F;font-size:14px}
+a{color:#0A6C76}
+</style>
+</head>
+<body><div class="w">
+<h1>Skoliometr – návrhy ergonomie ovládání</h1>
+<p class="muted">26. 10. 2026 · aplikace: <a href="../">tomasdebowski-a11y.github.io/Scoliometr</a></p>
+
+<h2>Obrázky</h2>
+<p><b>Rozložení na šířku</b> s bočním panelem a stupnicí přístroje:</p>
+<img src="na-sirku.jpg" alt="Stupnice přístroje na šířku s bočním panelem">
+<p><b>Režim přístroje</b> (Bunnellova stupnice):</p>
+<img src="rezim-pristroje.jpg" alt="Režim přístroje">
+
+<h2>Výchozí situace</h2>
+<p>Největší brzdou dnes je, že pro každý krok musíš sundat ruku z telefonu a podívat se na displej. Při měření máš obě ruce na přístroji, pacient vydrží v předklonu jen omezenou dobu a pozornost má patřit jemu.</p>
+<ul>
+<li><b>Funguje:</b> samozámek hodnoty po ustálení, pípnutí a hlasové hlášení, režim přístroje na hraně, sken spouštěný podržením nebo dotykem.</li>
+<li><b>Drhne:</b> oblast (Th, Th‑L, L) se přepíná ručně, chybné přiložení jde smazat jen celé, rozpracované vyšetření se při zavření aplikace ztratí, pacient se vybírá až při ukládání a výsledek do dokumentace se přepisuje ručně.</li>
+</ul>
+
+<h2>Návrhy</h2>
+<h3>1. Obrazovka na šířku jako hlavní pracovní plocha (hotovo)</h3>
+<ul>
+<li>Spodní lišta se na šířku mění na úzký svislý panel u kraje se čtyřmi ikonami (Měření, Sken, Postura, Pacienti).</li>
+<li>Panel je na straně palce, volba „vpravo / vlevo“ je v Nastavení.</li>
+<li>Střed patří stupnici a velkému číslu, tlačítka jsou v dolních rozích.</li>
+</ul>
+<h3>2. Vedený průběh vyšetření</h3>
+<ol>
+<li>Na začátku vybereš pacienta z dnešních nebo naposledy vyšetřených jedním klepnutím. Pro školní screening bude režim bez pacienta s počítadlem.</li>
+<li>Hrudní oblast, tři přiložení. Po třetím aplikace řekne průměr a sama přepne na Th‑L, potom na bederní.</li>
+<li>Volitelně sken. Pak se ukáže souhrn a vyšetření se uloží samo.</li>
+</ol>
+<p>Oblast, kterou nechceš měřit, přeskočíš klepnutím nebo povelem „dál“.</p>
+<h3>3. Ovládání bez sundání rukou</h3>
+<ul>
+<li><b>Ťuknutí prstem na telefon:</b> akcelerometr pozná ťuknutí na kryt. Dvě ťuknutí znamenají „zaznamenej teď“, tři ťuknutí „zruš poslední přiložení“. Funguje i v rukavicích.</li>
+<li><b>Hlas:</b> nové povely „zpět“, „dál“, „pauza“, „konec“ a „opakuj“ (přečte poslední hodnotu).</li>
+<li><b>Zvednutí a nové přiložení</b> zůstává hlavním gestem pro další měření, nic se nepotvrzuje.</li>
+</ul>
+<h3>4. Přerušení</h3>
+<ul>
+<li>Rozpracované vyšetření se průběžně ukládá jako koncept. Po telefonu, zhasnutí nebo zavření aplikace nabídne „Pokračovat ve vyšetření pacienta X“.</li>
+<li>Když se pacient potřebuje narovnat, položíš telefon na plocho a aplikace pozastaví. Po návratu na hranu pokračuje.</li>
+</ul>
+<h3>5. Oprava</h3>
+<ul>
+<li>Klepnutím na jednotlivé přiložení ho smažeš nebo změříš znovu, ne celou oblast. Po smazání je 5 s tlačítko „Vrátit“.</li>
+<li><b>Hlídání odlehlé hodnoty:</b> když se jedno přiložení liší od ostatních o víc než 2°, aplikace upozorní a požádá o čtvrté přiložení.</li>
+<li>Uložené vyšetření půjde upravit, s poznámkou kdy bylo změněno.</li>
+</ul>
+<h3>6. Výsledky</h3>
+<ul>
+<li>Souhrn na šířku na jedné obrazovce: tři oblasti se semaforem, rozdíl proti minulé kontrole, křivka ze skenu a miniatura posturní fotky.</li>
+<li>Souhrn se zároveň přečte nahlas.</li>
+</ul>
+<h3>7. Export a zápis do dokumentace</h3>
+<ul>
+<li><b>Řádek do karty pacienta jedním klepnutím</b>, třeba „ATR (Bunnell, Adams): Th 6,5° P, Th‑L 2,0° L, L 4,0° L; změna Th +1,5° od 3/2026“.</li>
+<li><b>Zpráva v PDF</b> na jednu stranu s křivkou, fotkou a grafem vývoje, poslaná přes sdílení.</li>
+<li>Připomínka zálohy jednou týdně, protože data žijí jen v telefonu.</li>
+</ul>
+
+<h2>Doporučené pořadí</h2>
+<ol>
+<li>Rozložení na šířku (hotovo).</li>
+<li>Vedený průběh s automatickým přepínáním oblastí a průběžným konceptem (návrhy 2 a 4).</li>
+<li>Oprava jednotlivého přiložení a hlídání odlehlé hodnoty (5).</li>
+<li>Řádek do dokumentace a zpráva v PDF (7).</li>
+<li>Ťuknutí na telefon a nové hlasové povely (3).</li>
+</ol>
+
+<h2>Otázky pro tebe</h2>
+<ol>
+<li>Kterou rukou ovládáš displej, tedy kam dát panel?</li>
+<li>Měříš vždy všechny tři oblasti, nebo často jen jednu?</li>
+<li>Jaký ambulantní software používáš (kvůli formátu řádku do dokumentace)?</li>
+<li>Stačí tři přiložení, nebo chceš nastavitelný počet?</li>
+</ol>
+</div></body>
+</html>
