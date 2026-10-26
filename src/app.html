@@ -96,8 +96,23 @@ main{grid-row:3;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-
 .trial.filled{border-style:solid;background:var(--surface2)}
 .trial.mean{border:1px solid var(--accent);font-weight:700}
 .trial small{display:block;font-family:var(--f-ui);font-size:.66rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
+/* Landscape: the tab bar becomes a side rail next to the thumb; content gets the full height */
+@media (orientation:landscape){
+  #app{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+  .top{grid-column:2;grid-row:1;padding-block:4px}
+  #simBanner{grid-column:2;grid-row:2}
+  main{grid-column:2;grid-row:3}
+  .tabs{grid-column:1;grid-row:1 / 4;grid-template-columns:1fr;grid-auto-rows:min-content;align-content:center;gap:6px;width:84px;border-top:0;border-right:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:0}
+  .tabs button{padding:12px 4px}
+  body.railRight #app{grid-template-columns:minmax(0,1fr) auto}
+  body.railRight .top,body.railRight #simBanner,body.railRight main{grid-column:1}
+  body.railRight .tabs{grid-column:2;border-right:0;border-left:1px solid var(--line);padding-left:0;padding-right:env(safe-area-inset-right,0px)}
+  .measure{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .gaugeWrap{min-height:min(300px,70vh)}
+  .bignum{font-size:clamp(3rem,10vw,5rem)}
+}
 @media (orientation:landscape) and (min-width:640px){
-  .measure{grid-template-columns:1fr}
+  .measure{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
   .gaugeWrap{min-height:190px}
   .side{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
@@ -163,10 +178,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .startHero{display:grid;gap:6px}
 .startHero h1{font-size:2rem;font-weight:800;font-stretch:72%;letter-spacing:.005em;line-height:1}
 .steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
-#instrument{position:fixed;top:0;left:0;right:0;bottom:var(--navH,64px);z-index:30;background:var(--surface);touch-action:none}
+#instrument{position:fixed;top:0;left:var(--railL,0px);right:var(--railR,0px);bottom:var(--navH,64px);z-index:30;background:var(--surface);touch-action:none}
 #instrument canvas{position:absolute;inset:0;width:100%;height:100%}
-#instrScan{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));min-height:44px;padding:8px 16px}
-#instrClose{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));min-height:36px;padding:6px 12px;font-size:.85rem;opacity:.85}
+#instrScan{position:absolute;bottom:10px;right:max(10px,env(safe-area-inset-right,0px));min-height:44px;padding:8px 16px}
+#instrClose{position:absolute;bottom:10px;left:max(10px,env(safe-area-inset-left,0px));min-height:36px;padding:6px 12px;font-size:.85rem;opacity:.85}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
 .diagram{width:100%;max-width:360px;height:auto;display:block}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
@@ -344,6 +359,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <label class="field"><span class="label">Doba ustálení před zámkem</span>
           <select id="stableMs"><option value="800">0,8 s</option><option value="1200">1,2 s</option><option value="1800">1,8 s</option></select></label>
         <div>
+          <label class="field" style="padding-bottom:6px"><span class="label">Na šířku: panel s kartami</span><select id="railSide"><option value="right">vpravo (pravá ruka)</option><option value="left">vlevo (levá ruka)</option></select></label>
           <label class="switch"><span>Režim přístroje: když telefon stojí na hraně, ukáže se celá stupnice jako na Bunnellově skoliometru</span><input type="checkbox" id="instr"></label>
           <label class="switch"><span>Automatický zámek hodnoty po ustálení</span><input type="checkbox" id="autoLock"></label>
           <label class="switch"><span>Zvukové signály</span><input type="checkbox" id="sound"></label>
@@ -429,7 +445,7 @@ const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platfor
 
 /* ---------- data ---------- */
 const LS_KEY = 'skoliometr.v1';
-const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, standBehind: true, instr: true, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: true, stableMs: 1200, calibrated: false, calInfo: '' };
+const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, standBehind: true, railRight: true, instr: true, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: true, stableMs: 1200, calibrated: false, calInfo: '' };
 let DB = { patients: [], exams: [], settings: {}, current: null };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.patients) DB = s; } catch (e) {}
 DB.settings = Object.assign({}, DEF, DB.settings || {});
@@ -1104,7 +1120,7 @@ $('#pForm').addEventListener('submit', e => {
 
 /* ---------- settings ---------- */
 function bindSettings() {
-  $('#camSide').value = ST.cameraRight ? 'right' : 'left'; $('#standSide').value = ST.standBehind ? 'behind' : 'front';
+  $('#camSide').value = ST.cameraRight ? 'right' : 'left'; $('#standSide').value = ST.standBehind ? 'behind' : 'front'; $('#railSide').value = ST.railRight ? 'right' : 'left';
   ['thrWarn', 'thrRef'].forEach(k => $('#' + k).value = ST[k]);
   $('#smooth').value = ST.smooth; $('#stableMs').value = String(ST.stableMs);
   ['instr', 'autoLock', 'sound', 'haptic', 'voice', 'voiceCmd'].forEach(k => $('#' + k).checked = !!ST[k]);
@@ -1113,6 +1129,8 @@ function bindSettings() {
 function updateDiagram() { $('#dgCam').setAttribute('cx', ST.cameraRight ? 248 : 112); }
 $('#camSide').addEventListener('change', e => { ST.cameraRight = e.target.value === 'right'; save(); updateDiagram(); });
 $('#standSide').addEventListener('change', e => { ST.standBehind = e.target.value === 'behind'; save(); });
+$('#railSide').addEventListener('change', e => { ST.railRight = e.target.value === 'right'; save(); applyRail(); });
+function applyRail() { document.body.classList.toggle('railRight', !!ST.railRight); }
 ['thrWarn', 'thrRef'].forEach(k => $('#' + k).addEventListener('change', e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (v > 0) { ST[k] = v; if (ST.thrRef < ST.thrWarn) ST.thrRef = ST.thrWarn; save(); bindSettings(); renderSummary(); } }));
 $('#smooth').addEventListener('change', e => { ST.smooth = e.target.value; save(); });
 $('#stableMs').addEventListener('change', e => { ST.stableMs = +e.target.value; save(); });
@@ -1229,11 +1247,20 @@ function instrUpdate() {
   const p = poseOf(), now = performance.now();
   if (p === 'edgeA' || p === 'edgeB') INSTR.lastEdge = now; else if (now - INSTR.lastEdge > 1500) INSTR.suppress = false;
   const want = ST.instr && !INSTR.suppress && view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && now - INSTR.lastEdge < 1500 && INSTR.lastEdge > 0;
-  if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; if (want) document.documentElement.style.setProperty('--navH', ($('.tabs').getBoundingClientRect().height + parseFloat(getComputedStyle(document.documentElement).paddingBottom || 0)) + 'px'); }
+  if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; if (want) placeInstrument(); }
   return want;
 }
 $('#instrument').addEventListener('click', e => { if (e.target.id === 'instrClose') { INSTR.suppress = true; return; } if (e.target.id === 'instrScan') { armScan(); return; } lockNow(); });
 function armScan() { show('scan'); if (!scan.running) $('#scanStart').click(); }
+// keep the navigation visible beside the instrument: bottom bar (portrait) or side rail (landscape)
+function placeInstrument() {
+  const r = $('.tabs').getBoundingClientRect(), st = document.documentElement.style, W = innerWidth, H = innerHeight;
+  const rail = r.height > r.width;
+  st.setProperty('--navH', rail ? '0px' : (H - r.top) + 'px');
+  st.setProperty('--railL', rail && r.left < W / 2 ? r.right + 'px' : '0px');
+  st.setProperty('--railR', rail && r.left >= W / 2 ? (W - r.left) + 'px' : '0px');
+}
+window.addEventListener('resize', () => { if (INSTR.on) placeInstrument(); });
 function drawInstr() {
   const c = $('#instrCanvas'); const { ctx, w, h } = fitCanvas(c); 
   const col = { bg: css('--surface'), ink: css('--ink'), muted: css('--muted'), tube: css('--tube'), edge: css('--tube-edge'), ok: css('--ok'), warn: css('--warn'), bad: css('--bad'), accent: css('--accent'), line: css('--line') };
@@ -1248,8 +1275,8 @@ function drawInstr() {
   const dyC = [-Math.sin(a), -Math.cos(a)], bx = [Math.cos(th), Math.sin(th)];
   const pz = poseOf(); const sgn = (pz === 'edgeA' || pz === 'edgeB') ? rightEnd(pz) : ((dyC[0] * bx[0] + dyC[1] * bx[1]) >= 0 ? 1 : -1);
   // dial geometry: shallow arc, concave up, like the scoliometer face
-  const span = 22 / D, K = span / (32 / D), chord = W * .86, Rt = chord / 2 / Math.sin(span), sag = Rt * (1 - Math.cos(span));
-  const tubeW = clamp(H * .075, 16, 34), y0 = -H * .12, cy = y0 - Rt;
+  const chord = W * .86, span = Math.min(22 / D, 2 * Math.atan(2 * H * .16 / chord)), K = span / (32 / D), Rt = chord / 2 / Math.sin(span), sag = Rt * (1 - Math.cos(span));
+  const tubeW = clamp(H * .075, 16, 34), y0 = -H * .08, cy = y0 - Rt;
   const P = (phi, r = Rt) => [r * Math.sin(phi * K), cy + r * Math.cos(phi * K)];
   ctx.lineCap = 'round';
   ctx.strokeStyle = col.edge; ctx.lineWidth = tubeW + 3; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.04, Math.PI / 2 - span * 1.04, true); ctx.stroke();
@@ -1311,7 +1338,7 @@ $('#startBtn').addEventListener('click', async () => {
   setTimeout(() => { if (!S.has) { startSim(); if (S.denied) toast('Bez povolení pohybu nelze měřit. Povolte ho v nastavení Safari.'); } }, 1500);
 });
 
-renderHeader(); setRegion('th'); renderSummary(); bindSettings();
+applyRail(); renderHeader(); setRegion('th'); renderSummary(); bindSettings();
 requestAnimationFrame(loop);
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude|anthropic/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.__skolio = { S, M, ST, scan, analyzeScan, atr, spinePitch, show, DB: () => DB };
