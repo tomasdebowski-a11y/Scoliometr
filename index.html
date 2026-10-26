@@ -322,7 +322,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <section id="v-settings" class="view" aria-label="Nastavení" hidden>
       <div class="card">
         <h2>Kalibrace nuly</h2>
-        <p class="small muted">Metoda obrácení: změří se dvě polohy na stejném místě, otočené o 180°. Výsledek odečte chybu senzoru, nerovnost krytu i tlačítek a náklon stolu, takže stůl nemusí být vodorovný. Každou polohu, ve které budete měřit (na plocho, na levé hraně, na pravé hraně), kalibrujte zvlášť. Začněte polohou na plocho.</p>
+        <p class="small muted">Stačí dva kroky a nic se neklepe: postavte telefon na stůl na hranu, na které měříte, a nechte ho chvíli v klidu. Po pípnutí ho otočte dokola displejem od sebe. Aplikace sama pozná hranu a odečte vliv tlačítek, krytu i nerovného stolu. Náklon telefonu k vám nebo od vás měření neovlivňuje.</p>
+        <div id="calSteps"></div>
         <p id="calText"></p>
         <div class="row"><button class="btn primary" id="calBtn">Začít kalibraci</button><button class="btn ghost" id="calReset">Zrušit všechny kalibrace</button></div>
       </div>
@@ -506,7 +507,9 @@ function onMotion(e) {
 // edgeA = up vector along +x (left edge down, phone held upright facing you), edgeB = right edge down.
 const POSES = { flat: 'na plocho', edgeA: 'na levé hraně', edgeB: 'na pravé hraně' };
 function poseOf(u = S.u) { const [x, , z] = u; const n = Math.hypot(...u) || 1; if (Math.abs(z) / n > .6) return 'flat'; if (Math.abs(x) / n > .6) return x > 0 ? 'edgeA' : 'edgeB'; return null; }
-function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; if (pose === 'edgeA' || pose === 'edgeB') return Math.atan2(y, Math.abs(x)) * D; return Math.atan2(y * Math.sign(z || 1), Math.abs(z)) * D; }
+// Tilt of the phone's long axis (device y) from horizontal. Using the full |x,z| plane makes it
+// independent of leaning the phone toward or away from the examiner, and of spine inclination.
+function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; const e = Math.atan2(y, Math.hypot(x, z)) * D; return pose === 'flat' ? e * Math.sign(z || 1) : e; }
 function devAngle() { const p = poseOf() || 'flat'; return rawAngle(S.u, p) - (ST.offsets[p] || 0); }          // + = camera end higher
 function atr() { return devAngle() * (ST.cameraRight ? 1 : -1); } // + = right side higher (right hump)
 function spinePitch() { const [x, y, z] = S.u; const p = poseOf(); if (p === 'edgeA' || p === 'edgeB') return Math.atan2(z * Math.sign(x), Math.hypot(x, y)) * D; return Math.atan2(x * Math.sign(z || 1), Math.hypot(y, z)) * D; }
@@ -1090,46 +1093,56 @@ $('#stableMs').addEventListener('change', e => { ST.stableMs = +e.target.value; 
 ['autoLock', 'sound', 'haptic', 'voice'].forEach(k => $('#' + k).addEventListener('change', e => { ST[k] = e.target.checked; save(); }));
 $('#voiceCmd').addEventListener('change', e => { ST.voiceCmd = e.target.checked; save(); ST.voiceCmd ? startVoiceCmd() : stopVoiceCmd(); });
 
-const CAL = { step: 0, a1: 0, pose: null };
+// Reversal calibration, hands-free: capture when still, wait for the 180° turn, capture again.
+const CAL = { step: 0, a1: 0, pose: null, buf: [], iv: null, moved: false };
+const PH = (front, on) => `<svg viewBox="0 0 150 86" width="150" height="86" aria-hidden="true">
+  <rect x="5" y="72" width="140" height="6" rx="2" fill="var(--line)"/>
+  <rect x="17" y="18" width="116" height="54" rx="9" fill="${front ? 'var(--ink)' : 'var(--surface2)'}" stroke="var(--ink)" stroke-width="2.5"/>
+  ${front ? '<rect x="25" y="25" width="100" height="40" rx="4" fill="var(--accent)" opacity=".85"/><text x="75" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="var(--accent-ink)" font-family="Archivo,sans-serif">DISPLEJ</text>'
+          : '<circle cx="114" cy="31" r="6" fill="var(--ink)"/><circle cx="114" cy="47" r="6" fill="var(--ink)"/><text x="62" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)" font-family="Archivo,sans-serif">ZÁDA</text>'}
+  ${on ? '' : ''}</svg>`;
 function renderCal() {
-  const t = $('#calText'), b = $('#calBtn');
+  const t = $('#calText'), b = $('#calBtn'), st = $('#calSteps');
   if (CAL.step === 0) {
+    st.innerHTML = '';
     t.innerHTML = Object.keys(POSES).map(k => `<div class="peak"><span>${POSES[k][0].toUpperCase() + POSES[k].slice(1)}</span>${ST.cal[k] ? `<span class="small"><span class="pill ok"><span class="dot"></span>kalibrováno</span> ${esc(ST.cal[k])}</span>` : '<span class="pill warn"><span class="dot"></span>nekalibrováno</span>'}</div>`).join('');
-    b.textContent = 'Kalibrovat polohu'; b.disabled = false;
+    b.textContent = 'Začít kalibraci'; b.hidden = false; return;
   }
-  if (CAL.step === 1) { t.innerHTML = '<b>Krok 1/2.</b> Položte telefon na pevný stůl tak, jak budete měřit: displejem nahoru, nebo postavený na dlouhé hraně (opřený, aby nespadl). Nesahejte na něj a klepněte Měřit.'; b.textContent = 'Měřit polohu 1'; }
-  if (CAL.step === 2) { t.innerHTML = `<b>Krok 2/2.</b> Telefon ${POSES[CAL.pose]}. Otočte ho o 180° na stejném místě tak, aby dole zůstala stejná strana (${CAL.pose === 'flat' ? 'displej dál nahoře' : 'stejná hrana na stole, displej teď od vás'}). Pusťte ho a klepněte Měřit.`; b.textContent = 'Měřit polohu 2'; }
+  b.textContent = 'Zrušit'; 
+  const s1 = CAL.step === 1, s2 = CAL.step >= 2;
+  st.innerHTML = `<div class="row" style="gap:16px;align-items:flex-start">
+    <div style="display:grid;gap:4px;opacity:${s1 ? 1 : .45}">${PH(true)}<span class="small"><b>1.</b> Postavte telefon na stůl na hranu, displejem k sobě${s2 ? ' ✓' : ''}</span></div>
+    <div style="display:grid;gap:4px;opacity:${s2 ? 1 : .45}">${PH(false)}<span class="small"><b>2.</b> Otočte ho dokola, displejem od sebe. Dole stejná hrana.</span></div></div>`;
+  const msg = { 1: 'Pusťte telefon, měřím sám, až bude v klidu…', 2: 'Hotovo. Teď telefon otočte dokola na stejném místě a pusťte ho.', 3: 'Pusťte telefon, měřím…' }[CAL.step];
+  t.innerHTML = `<span class="pill"><span class="dot"></span>${msg}</span>`;
 }
-function sampleStable(ms = 1600) {
-  return new Promise((res, rej) => {
-    const vals = [], zs = []; let bad = 0; const t0 = performance.now(); const pose = poseOf();
-    if (!pose) { rej(new Error('poloha')); return; }
-    const iv = setInterval(() => { if (poseOf() !== pose) bad += 10; vals.push(rawAngle(S.u, pose)); zs.push(S.u[2]); if (S.gyro > 8) bad++; if (performance.now() - t0 > ms) { clearInterval(iv); const st = stats(vals); if (bad > 5 || st.sd > .25) rej(new Error('pohyb')); else res({ a: st.m, z: zs.reduce((x, y) => x + y, 0) / zs.length, pose }); } }, 20);
-  });
-}
-$('#calBtn').addEventListener('click', async () => {
-  const b = $('#calBtn');
-  if (CAL.step === 0) { CAL.step = 1; renderCal(); return; }
-  b.disabled = true; b.textContent = 'Měřím…';
-  try {
-    const r = await sampleStable();
-    if (CAL.step === 1) {
-      if (r.pose === 'flat' && r.z < 0) {
-        // platform reports gravity with the opposite sign: fix it, and the edge zeros flip with it
-        ST.platformSign *= -1; for (let i = 0; i < 3; i++) S.u[i] *= -1;
-        ['edgeA', 'edgeB'].forEach(k => { if (ST.offsets[k]) ST.offsets[k] *= -1; });
-        r.a = rawAngle(S.u, 'flat');
-      }
-      CAL.a1 = r.a; CAL.pose = r.pose; CAL.step = 2; beep(880, .08); buzz(40);
-    } else {
-      if (r.pose !== CAL.pose) { toast(`Telefon musí zůstat ${POSES[CAL.pose]}. Otočte ho jen kolem svislé osy.`); b.disabled = false; renderCal(); return; }
-      const off = (CAL.a1 + r.a) / 2, tilt = (CAL.a1 - r.a) / 2;
-      ST.offsets[CAL.pose] = off;
-      ST.cal[CAL.pose] = `nula ${fmt(off)}°, stůl ${fmt(Math.abs(tilt))}° (${new Date().toLocaleDateString('cs-CZ')})`;
-      save(); chord(); buzz([40, 60, 40]); say(`Kalibrace ${POSES[CAL.pose]} hotová.`); CAL.step = 0;
+function calStop() { clearInterval(CAL.iv); CAL.iv = null; CAL.step = 0; CAL.buf = []; renderCal(); }
+function calLoop() {
+  const now = performance.now(), pose = poseOf();
+  if (CAL.step === 2) { if (S.gyro > 25 || (pose && pose !== CAL.pose)) CAL.moved = true; if (CAL.moved && pose === CAL.pose && S.gyro < 3) { CAL.step = 3; CAL.buf = []; renderCal(); } return; }
+  if (!pose || S.gyro > 3) { CAL.buf = []; return; }
+  if (CAL.step === 3 && pose !== CAL.pose) { CAL.buf = []; return; }
+  CAL.buf.push({ t: now, a: rawAngle(S.u, pose), z: S.u[2] }); while (now - CAL.buf[0].t > 1500) CAL.buf.shift();
+  if (now - CAL.buf[0].t < 1400) return;
+  const s = stats(CAL.buf.map(v => v.a)); if (s.sd > .12) return;
+  if (CAL.step === 1) {
+    let a = s.m;
+    if (pose === 'flat' && CAL.buf[0].z < 0) {
+      // platform reports gravity with the opposite sign: fix it, and the edge zeros flip with it
+      ST.platformSign *= -1; for (let i = 0; i < 3; i++) S.u[i] *= -1;
+      ['edgeA', 'edgeB'].forEach(k => { if (ST.offsets[k]) ST.offsets[k] *= -1; }); a = -a;
     }
-  } catch (e) { toast(e.message === 'poloha' ? 'Telefon musí ležet displejem nahoru, nebo stát na dlouhé hraně.' : 'Telefon se během měření pohnul. Nechte ho ležet a zkuste to znovu.'); }
-  b.disabled = false; renderCal();
+    CAL.a1 = a; CAL.pose = pose; CAL.step = 2; CAL.moved = false; CAL.buf = []; beep(880, .1); buzz(50); say('Otočte telefon.'); renderCal(); return;
+  }
+  const off = (CAL.a1 + s.m) / 2, tilt = (CAL.a1 - s.m) / 2;
+  ST.offsets[CAL.pose] = off;
+  ST.cal[CAL.pose] = `nula ${fmt(off)}°, stůl ${fmt(Math.abs(tilt))}° (${new Date().toLocaleDateString('cs-CZ')})`;
+  save(); chord(); buzz([40, 60, 40]); say(`Kalibrace ${POSES[CAL.pose]} hotová.`); toast(`Kalibrace ${POSES[CAL.pose]} uložena.`); calStop();
+}
+$('#calBtn').addEventListener('click', () => {
+  if (CAL.step) { calStop(); return; }
+  if (!S.has && !S.sim) { toast('Senzory nejsou spuštěné.'); return; }
+  CAL.step = 1; CAL.buf = []; renderCal(); CAL.iv = setInterval(calLoop, 30);
 });
 $('#calReset').addEventListener('click', () => { ST.offsets = { flat: 0, edgeA: 0, edgeB: 0 }; ST.cal = {}; CAL.step = 0; save(); renderCal(); });
 $('#exportAll').addEventListener('click', async () => { const photos = await IDB.all().catch(() => []); shareFile(`skoliometr-zaloha-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...DB, photos }), 'application/json'); });
