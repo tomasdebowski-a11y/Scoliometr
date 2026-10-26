@@ -5,7 +5,7 @@ head = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0A6C76">
+<meta name="theme-color" content="#1f4fa3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Skoliometr">
@@ -29,9 +29,9 @@ ver = hashlib.sha1(out.encode()).hexdigest()[:8]
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0A1315",
-  "theme_color": "#0A6C76",
+  "orientation": "any",
+  "background_color": "#0d1017",
+  "theme_color": "#1f4fa3",
   "icons": [
     {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"},
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},

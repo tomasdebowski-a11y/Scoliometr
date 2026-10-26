@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0A6C76">
+<meta name="theme-color" content="#1f4fa3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Skoliometr">
@@ -15,152 +15,130 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one-screen clinical instrument. Header (patient) / view / bottom tabs.
-   Measure view: curved Bunnell tube along the phone's long axis + large readout. */
+/* Same family as Posturální profil: dark measuring stage with glass controls, light result card, gold primary action.
+   Landscape = measuring (Bunnell dial, tap anywhere records), portrait = results. Everything else lives in the menu. */
 :root{
-  --bg:#EDF2F3; --surface:#FFFFFF; --surface2:#E2EAEC; --ink:#0F2329; --muted:#56696F; --line:#C9D6D9;
-  --accent:#0A6C76; --accent-ink:#FFFFFF; --ok:#1F7D54; --warn:#A86F00; --bad:#BE3328;
-  --ok-bg:#DDF0E6; --warn-bg:#F7EBCF; --bad-bg:#F8DEDA;
-  --tube:#D3E2E5; --tube-edge:#AFC4C9; --ball:#0F2329;
-  --s-th:#0A6C76; --s-tl:#7650A8; --s-l:#B85A14;
-  --f-ui:'Archivo','Segoe UI',Roboto,system-ui,sans-serif;
-  --f-num:'Archivo','Segoe UI',Roboto,system-ui,sans-serif;
+  --bg:#f2f4f8; --surface:#ffffff; --surface2:#f4f6fa; --ink:#14213d; --muted:#5b6782; --line:#d8deea;
+  --accent:#1f4fa3; --accent-soft:#e5ecf9; --accent-ink:#ffffff; --gold:#b9861d; --pt:#f5c95c;
+  --ok:#2f7d4f; --warn:#b4541a; --bad:#c0392b; --ok-bg:#e3f2e8; --warn-bg:#fbeadf; --bad-bg:#f9e0dc;
+  --s-th:#1f4fa3; --s-tl:#7650a8; --s-l:#b4541a;
+  --stage:#0d1017; --glass:rgba(20,24,34,.58); --glass-line:rgba(255,255,255,.16); --on-glass:#ffffff; --on-glass-dim:rgba(255,255,255,.62);
+  --aim:#3dff6e; --near:#ffd23d; --far:#ff5a4e;
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
   --r:14px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0A1315; --surface:#122024; --surface2:#1A2C31; --ink:#E1ECEE; --muted:#8AA0A6; --line:#25393F;
-  --accent:#4BC3CB; --accent-ink:#04262A; --ok:#52C68F; --warn:#F0B53F; --bad:#F26D60;
-  --ok-bg:#12352A; --warn-bg:#3A2E10; --bad-bg:#3F1C19;
-  --tube:#1B3136; --tube-edge:#2E4A51; --ball:#E1ECEE;
-  --s-th:#4BC3CB; --s-tl:#B89DEB; --s-l:#F2A35E; color-scheme:dark}}
+  --bg:#0c1322; --surface:#141d31; --surface2:#1a2540; --ink:#e6ebf5; --muted:#9ba7c0; --line:#28344f;
+  --accent:#79a4f2; --accent-soft:#1b2a4a; --accent-ink:#0c1322; --gold:#e3b653;
+  --ok:#6cc792; --warn:#f0a06a; --bad:#f2786b; --ok-bg:#17321f; --warn-bg:#3a2214; --bad-bg:#3d1b18;
+  --s-th:#79a4f2; --s-tl:#b89deb; --s-l:#f0a06a; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0A1315; --surface:#122024; --surface2:#1A2C31; --ink:#E1ECEE; --muted:#8AA0A6; --line:#25393F;
-  --accent:#4BC3CB; --accent-ink:#04262A; --ok:#52C68F; --warn:#F0B53F; --bad:#F26D60;
-  --ok-bg:#12352A; --warn-bg:#3A2E10; --bad-bg:#3F1C19;
-  --tube:#1B3136; --tube-edge:#2E4A51; --ball:#E1ECEE;
-  --s-th:#4BC3CB; --s-tl:#B89DEB; --s-l:#F2A35E; color-scheme:dark}
-
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;overflow:hidden}
+  --bg:#0c1322; --surface:#141d31; --surface2:#1a2540; --ink:#e6ebf5; --muted:#9ba7c0; --line:#28344f;
+  --accent:#79a4f2; --accent-soft:#1b2a4a; --accent-ink:#0c1322; --gold:#e3b653;
+  --ok:#6cc792; --warn:#f0a06a; --bad:#f2786b; --ok-bg:#17321f; --warn-bg:#3a2214; --bad-bg:#3d1b18;
+  --s-th:#79a4f2; --s-tl:#b89deb; --s-l:#f0a06a; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
-h1,h2,h3{margin:0;text-wrap:balance;font-stretch:88%}
-h2{font-size:1.15rem;font-weight:700}
+h1,h2,h3{margin:0}
+h2{font-size:1.1rem;font-weight:700}
 h3{font-size:1rem;font-weight:700}
 p{margin:0}
-.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:700}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:600}
 .muted{color:var(--muted)}
 .small{font-size:.85rem}
 .label{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-
-#app{height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto}
-.top{display:flex;align-items:center;gap:10px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line)}
-.brand{font-weight:800;font-stretch:75%;font-size:1.25rem;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
-.brand svg{width:22px;height:22px;color:var(--accent)}
-.spacer{flex:1}
-.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:6px 12px;cursor:pointer;max-width:52vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:.9rem}
-.chip svg{width:16px;height:16px;flex:none}
-.iconbtn{border:0;background:transparent;padding:6px;border-radius:10px;cursor:pointer;display:grid;place-items:center}
-.iconbtn svg{width:24px;height:24px}
-
-#simBanner{background:var(--warn-bg);color:var(--ink);font-size:.85rem;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
-main{grid-row:3;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch}
-.view{max-width:1000px;margin:0 auto;padding-block:14px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px;align-content:start}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:44px}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card,.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-weight:600;font-size:.92rem;min-height:44px;padding:0 14px;border-radius:12px;cursor:pointer}
+.btn.primary{background:var(--pt);border-color:var(--pt);color:#14213d}
+.btn.blue{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.ghost{background:transparent}
-.btn.danger{color:var(--bad);border-color:var(--bad)}
-.btn.big{font-size:1.05rem;padding:14px 18px;width:100%}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn.big{min-height:54px;font-size:1rem;width:100%;border-radius:27px}
 .btn[disabled]{opacity:.45;cursor:default}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface2);border-radius:12px;padding:3px;gap:3px}
-.seg button{border:0;background:transparent;border-radius:9px;padding:8px 6px;font-weight:600;cursor:pointer;font-size:.9rem;min-height:40px;display:grid;gap:0;line-height:1.15}
-.seg button small{font-weight:500;font-size:.72rem;color:var(--muted)}
-.seg button[aria-selected="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:.82rem;font-weight:600;background:var(--surface2);color:var(--ink)}
+.btn:active{transform:scale(.98)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:600;background:var(--surface2);color:var(--ink);white-space:nowrap}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.xbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;flex:none}
+.mark{width:36px;height:36px;border-radius:10px;background:#1f4fa3;display:grid;place-items:center;flex:none;color:var(--pt)}
+.mark svg{width:22px;height:22px}
 
-/* Tabs */
-.tabs{grid-row:4;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.tabs button{border:0;background:transparent;padding:8px 2px 9px;display:grid;justify-items:center;gap:2px;font-size:.72rem;font-weight:600;color:var(--muted);cursor:pointer}
-.tabs button svg{width:24px;height:24px}
-.tabs button[aria-selected="true"]{color:var(--accent)}
-
-/* Measure */
-.measure{display:grid;grid-template-columns:minmax(104px,32%) minmax(0,1fr);gap:14px;align-items:stretch}
-.gaugeWrap{position:relative;min-height:380px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer}
-.gaugeWrap canvas{position:absolute;inset:0;width:100%;height:100%}
-.side{display:grid;gap:12px;align-content:start;min-width:0}
-.readout{display:grid;gap:4px}
-.bignum{font-family:var(--f-num);font-weight:800;font-stretch:70%;font-size:clamp(3.6rem,19vw,6rem);line-height:.9;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.bignum sup{font-size:.45em;vertical-align:.9em;margin-left:2px;letter-spacing:0}
-.sideword{font-weight:800;font-stretch:75%;font-size:1.4rem;text-transform:uppercase;letter-spacing:.06em}
-.prog{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}
-.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .08s linear}
-.trials{display:grid;grid-template-columns:repeat(3,1fr) 1.25fr;gap:6px}
-.trial{border:1px dashed var(--line);border-radius:10px;padding:6px 4px;text-align:center;font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:600;font-size:1rem;min-height:44px;display:grid;place-items:center}
-.trial.filled{border-style:solid;background:var(--surface2)}
-.trial.mean{border:1px solid var(--accent);font-weight:700}
-.trial small{display:block;font-family:var(--f-ui);font-size:.66rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
-/* Landscape: the tab bar becomes a side rail next to the thumb; content gets the full height */
-@media (orientation:landscape){
-  #app{grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
-  .top{grid-column:2;grid-row:1;padding-block:4px}
-  #simBanner{grid-column:2;grid-row:2}
-  main{grid-column:2;grid-row:3}
-  .tabs{grid-column:1;grid-row:1 / 4;grid-template-columns:1fr;grid-auto-rows:min-content;align-content:center;gap:6px;width:84px;border-top:0;border-right:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:0}
-  .tabs button{padding:12px 4px}
-  body.railRight #app{grid-template-columns:minmax(0,1fr) auto}
-  body.railRight .top,body.railRight #simBanner,body.railRight main{grid-column:1}
-  body.railRight .tabs{grid-column:2;border-right:0;border-left:1px solid var(--line);padding-left:0;padding-right:env(safe-area-inset-right,0px)}
-  .measure{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  .gaugeWrap{min-height:min(300px,70vh)}
-  .bignum{font-size:clamp(3rem,10vw,5rem)}
-}
-@media (orientation:landscape) and (min-width:640px){
-  .measure{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  .gaugeWrap{min-height:190px}
-  .side{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-}
-.summary{width:100%;border-collapse:collapse;font-size:.92rem}
-.summary th,.summary td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
-.summary td.v{font-variant-numeric:tabular-nums;white-space:nowrap}
-.summary .pill{font-size:.75rem;padding:3px 8px}
-.summary td:last-child{text-align:right}
-.summary tr:last-child td{border-bottom:0}
+/* ---------- výsledky (na výšku) ---------- */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.rhead{flex:none;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px))}
+.rhead .t{flex:1;min-width:0;display:grid;line-height:1.2}
+.rhead .t b{font-size:1.05rem}
+.rhead .t span{font:500 .75rem var(--f-num);color:var(--muted)}
+.sbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px max(14px,env(safe-area-inset-right,0px)) 18px max(14px,env(safe-area-inset-left,0px));display:grid;gap:12px;align-content:start}
+.sbody>*{max-width:680px;width:100%;margin:0 auto}
+.pfield{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 10px 0 14px;min-height:52px;cursor:pointer;text-align:left}
+.pfield span{font-size:.85rem;color:var(--muted);flex:none}
+.pfield b{flex:1;min-width:0;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go{display:flex;align-items:center;gap:12px;border-radius:16px;padding:12px;background:var(--stage);color:#fff;border:0;text-align:left;cursor:pointer}
+.go .ph{width:58px;height:34px;border:2px solid var(--pt);border-radius:7px;flex:none;position:relative}
+.go .ph::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--aim)}
+.go span{flex:1;min-width:0;display:grid;gap:1px}
+.go b{font-size:.98rem}
+.go small{font-size:.8rem;color:var(--on-glass-dim)}
+.go i{font-style:normal;flex:none;background:var(--pt);color:#14213d;font-weight:700;border-radius:20px;padding:9px 14px;font-size:.9rem}
+.rlist{display:grid;gap:10px}
+.rr{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.rr.ok{border-left-color:var(--ok)} .rr.warn{border-left-color:var(--warn)} .rr.bad{border-left-color:var(--bad)}
+.rr .top{display:flex;align-items:baseline;gap:10px}
+.rr .nm{flex:1;min-width:0}
+.rr .nm b{font-size:1rem}
+.rr .nm code{font:500 .78rem var(--f-num);color:var(--muted);margin-left:6px}
+.rr .val{font:600 2rem/1 var(--f-num);font-variant-numeric:tabular-nums}
+.rr .sd{font:600 1rem var(--f-num);margin-left:4px}
+.rr.ok .val,.rr.ok .sd{color:var(--ok)} .rr.warn .val,.rr.warn .sd{color:var(--warn)} .rr.bad .val,.rr.bad .sd{color:var(--bad)}
+.rr .none{color:var(--muted);font-size:.9rem}
+.rbar{position:relative;height:12px;border-radius:6px;margin:4px 0 0}
+.rbar .z{position:absolute;inset:0;border-radius:6px}
+.rbar .c{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink);opacity:.35}
+.rbar .t{position:absolute;top:1px;width:4px;height:10px;margin-left:-2px;border-radius:2px;background:var(--ink);opacity:.55}
+.rbar .m{position:absolute;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.rbar .m.ok{background:var(--ok)} .rbar .m.warn{background:var(--warn)} .rbar .m.bad{background:var(--bad)}
+.rscale{display:flex;justify-content:space-between;font:500 .7rem var(--f-num);color:var(--muted)}
+.rmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tchip{border:1px solid var(--line);background:var(--surface2);border-radius:999px;font:500 .8rem var(--f-num);padding:4px 10px;cursor:pointer;min-height:30px}
+.tchip.arm{background:var(--bad);border-color:var(--bad);color:#fff}
+.delta{font:500 .78rem var(--f-num);color:var(--muted)}
+.delta.sig{color:var(--bad);font-weight:600}
+.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted)}
+.f input,.f select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;width:100%;min-height:46px}
+.resfoot{flex:none;display:grid;gap:8px;padding:10px max(14px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--surface)}
+.resfoot>*{max-width:680px;width:100%;margin:0 auto}
+.rfrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chartBox{position:relative;width:100%;aspect-ratio:16/9}
+.chartBox canvas{position:absolute;inset:0;width:100%;height:100%}
 .simctl{display:grid;gap:8px;border:1px dashed var(--warn);border-radius:var(--r);padding:10px}
 input[type=range]{width:100%;accent-color:var(--accent)}
 
-/* Scan */
-.chartBox{position:relative;width:100%;aspect-ratio:16/10;max-width:100%}
-.chartBox canvas{position:absolute;inset:0;width:100%;height:100%}
-.scanLive{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+/* ---------- stránky z menu ---------- */
+#page{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
+.view{display:grid;gap:12px;align-content:start}
+.field{display:grid;gap:4px}
+.field input,.field select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;min-height:44px;width:100%;font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:8px;border-bottom:1px solid var(--line)}
+.switch:last-child{border-bottom:0}
+.switch input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.prose{display:grid;gap:8px}
+.prose ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.diagram{width:100%;max-width:360px;height:auto;display:block}
 .peaks{display:grid;gap:6px}
 .peak{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding-block:6px}
 .peak:last-child{border-bottom:0}
-
-/* Photo */
-.cam{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:3/4;background:#000;border-radius:var(--r);overflow:hidden}
-.cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%}
-.cam video{object-fit:cover}
-.cam .camMsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#E1ECEE;padding:24px;font-size:.95rem}
-.annot{position:relative;width:100%;max-width:520px;margin:0 auto;touch-action:none}
-.annot canvas{width:100%;display:block;border-radius:var(--r)}
-.tools{display:flex;flex-wrap:wrap;gap:6px}
-.tools button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;cursor:pointer;min-height:36px}
-.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
-.thumbs button{border:1px solid var(--line);border-radius:10px;padding:0;overflow:hidden;background:var(--surface2);cursor:pointer;aspect-ratio:3/4}
-.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
-
-/* Patients */
 .plist{list-style:none;margin:0;padding:0;display:grid}
 .plist li button{width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;padding:12px 2px;display:flex;gap:10px;align-items:center;cursor:pointer}
 .plist li:last-child button{border-bottom:0}
@@ -169,156 +147,109 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .hist{border-collapse:collapse;width:100%;font-size:.88rem;min-width:420px}
 .hist th,.hist td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 .hist td.v{font-family:var(--f-num);font-variant-numeric:tabular-nums}
-.delta{font-size:.75rem;font-family:var(--f-num);margin-left:4px}
-.delta.sig{color:var(--bad);font-weight:700}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
 
-/* Forms */
-.field{display:grid;gap:4px}
-.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;min-height:44px;width:100%;box-sizing:border-box}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.switch{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:6px;border-bottom:1px solid var(--line)}
-.switch:last-child{border-bottom:0}
-.switch input{width:22px;height:22px;accent-color:var(--accent);flex:none}
-.prose{display:grid;gap:8px;max-width:65ch}
-.prose ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+/* ---------- měření (na šířku): tmavá scéna, skleněné ovládání ---------- */
+#studio{position:fixed;inset:0;z-index:30;background:var(--stage);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;color:var(--on-glass)}
+#stage{position:absolute;left:50%;top:50%;transform-origin:50% 50%}
+#sCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-line);color:var(--on-glass)}
+.stop{position:absolute;top:10px;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:center;pointer-events:none}
+.stop>*{pointer-events:auto}
+.sgrow{flex:1}
+.regs{display:flex;gap:4px;padding:4px;border-radius:24px}
+.reg{display:flex;align-items:center;gap:7px;height:44px;padding:0 12px 0 14px;border-radius:20px;border:2px solid transparent;background:transparent;color:var(--on-glass-dim);font:600 .9rem var(--f-num);cursor:pointer}
+.reg .d{display:flex;gap:3px}
+.reg .d i{width:7px;height:7px;border-radius:50%;border:1.5px solid currentColor}
+.reg .d i.f{background:var(--pt);border-color:var(--pt)}
+.reg.cur{border-color:var(--aim);color:var(--aim)}
+.reg.done:not(.cur){color:var(--pt)}
+.gbtn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none;padding:0}
+.gbtn:active,.reg:active{background:rgba(255,255,255,.22)}
+.sbot{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:12px;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
+.sbot>*{pointer-events:auto}
+.tbtn{height:48px;border-radius:24px;padding:0 14px 0 10px;display:flex;align-items:center;gap:6px;font:600 .85rem var(--f-num);cursor:pointer}
+.tbtn[aria-pressed="true"]{color:var(--pt)}
+.shint{flex:1;text-align:center;font-size:.8rem;color:var(--on-glass-dim);padding-bottom:14px;pointer-events:none!important}
+.shut{display:grid;justify-items:center;gap:4px}
+.shut small{font:600 .7rem var(--f-num);letter-spacing:.12em;color:var(--on-glass-dim)}
+.shutter{width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.18);cursor:pointer;box-shadow:0 0 0 3px rgba(0,0,0,.35);display:grid;place-items:center;padding:0;color:#fff;font:600 1.4rem var(--f-num)}
+.shutter i{width:52px;height:52px;border-radius:50%;background:var(--far);transition:all .15s}
+.shutter.rec i{width:26px;height:26px;border-radius:6px}
+.shutter.count i{display:none}
+.shutter:active{transform:scale(.95)}
+.scount{position:absolute;inset:0;display:grid;place-items:center;background:rgba(13,16,23,.72);font:600 10rem/1 var(--f-num);color:var(--pt);pointer-events:none}
 
-/* Overlays */
-.overlay{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:40;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-left,0px));overflow:auto}
-.sheetBox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(520px,100%);display:grid;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);max-height:calc(100% - 24px);overflow:auto;box-sizing:border-box}
-.startHero{display:grid;gap:6px}
-.startHero h1{font-size:2rem;font-weight:800;font-stretch:72%;letter-spacing:.005em;line-height:1}
-.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
-#instrument{position:fixed;top:0;left:var(--railL,0px);right:var(--railR,0px);bottom:var(--navH,64px);z-index:30;background:var(--surface);touch-action:none}
-#instrument canvas{position:absolute;inset:0;width:100%;height:100%}
-#instrScan{position:absolute;bottom:10px;right:max(10px,env(safe-area-inset-right,0px));min-height:44px;padding:8px 16px}
-#instrClose{position:absolute;bottom:10px;left:max(10px,env(safe-area-inset-left,0px));min-height:36px;padding:6px 12px;font-size:.85rem;opacity:.85}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
-.diagram{width:100%;max-width:360px;height:auto;display:block}
+/* ---------- nabídka, listy, toast ---------- */
+.menu{position:absolute;z-index:45;top:calc(64px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:min(290px,calc(100% - 20px));max-height:calc(100% - 80px);overflow:auto;padding:8px;border-radius:20px;background:#1a2030;border:1px solid rgba(255,255,255,.18);box-shadow:0 18px 40px rgba(0,0,0,.5);display:grid;gap:4px;color:#fff}
+#stage .menu{top:64px}
+.topt{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 12px;border-radius:14px;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer;width:100%}
+.topt:active{background:rgba(255,255,255,.1)}
+.topt span{flex:1;display:grid;gap:1px;min-width:0}
+.topt b{font-size:.95rem;font-weight:600}
+.topt small{font-size:.75rem;color:var(--on-glass-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topt .ck{color:var(--pt);stroke-width:2.4;visibility:hidden}
+.topt[aria-checked="true"] .ck{visibility:visible}
+.msep{height:1px;background:rgba(255,255,255,.12);margin:2px 8px}
+.overlay{position:fixed;inset:0;background:rgba(5,8,14,.55);z-index:50;display:grid;place-items:center;padding:16px;overflow:auto}
+.sheetBox{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;width:min(520px,100%);display:grid;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-height:calc(100% - 24px);overflow:auto}
+#startOverlay{background:var(--stage);color:#fff}
+#startOverlay .sheetBox{background:transparent;border:0;box-shadow:none;color:#fff}
+.startHero{display:grid;gap:8px}
+.startHero h1{font-size:1.9rem;line-height:1.1;font-weight:700}
+.steps{margin:0;padding-left:1.3em;display:grid;gap:8px;color:rgba(255,255,255,.8)}
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(20,24,34,.92);color:#fff;border:1px solid rgba(255,255,255,.16);padding:10px 16px;border-radius:14px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);text-align:center}
+#simBanner{position:fixed;left:0;right:0;top:0;z-index:55;background:var(--pt);color:#14213d;font-size:.78rem;padding:4px 12px;text-align:center;pointer-events:none}
+[hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 </style>
 
-
 </head>
 <body>
+<div id="simBanner" hidden>Simulace: senzory nejsou v tomto okně dostupné</div>
 <div id="app">
-  <header class="top">
-    <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 16a9 9 0 0 1 18 0"/><circle cx="8.5" cy="13.2" r="2.2" fill="currentColor" stroke="none"/><path d="M12 7v2"/></svg>Skoliometr</div>
-    <div class="spacer"></div>
-    <button id="patientBtn" class="chip" aria-label="Vybrat pacienta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="patientName">Bez pacienta</span></button>
-    <button id="setBtn" class="iconbtn" aria-label="Nastavení a kalibrace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+  <header class="rhead">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 16a9 9 0 0 1 18 0"/><circle cx="8.5" cy="13.2" r="2.2" fill="currentColor" stroke="none"/></svg></div>
+    <div class="t"><b>Skoliometr</b><span id="examDate"></span></div>
+    <button class="xbtn" id="menuBtn" aria-label="Nabídka"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18.5" r="1.2"/></svg></button>
   </header>
-  <div id="simBanner" hidden>Pohybové senzory nejsou v tomto okně dostupné, proto běží <b>simulace</b>. Ke skutečnému měření otevřete aplikaci v telefonu z její vlastní adresy (Nastavení → Instalace).</div>
-  <main id="main">
+  <main class="sbody" id="v-measure" aria-label="Výsledky vyšetření">
+    <button class="pfield" id="patientBtn" type="button"><span>Pacient</span><b id="patientName">Bez pacienta</b><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="go" id="goMeasure" type="button"><div class="ph"></div><span><b>Otočte telefon na šířku a měřte</b><small>Klepnutí na displej zapíše hodnotu, SKEN nahraje celou páteř.</small></span><i>Měřit</i></button>
+    <div class="rlist" id="rList"></div>
+    <div class="card" id="rScan"></div>
+    <label class="f">Poznámka<input id="examNote" placeholder="např. stav po korzetu, bolest, sport" autocomplete="off"></label>
+    <div class="simctl" id="simCtl" hidden>
+      <span class="label">Simulace pacienta</span>
+      <label class="small" for="simAtr">Skutečná rotace trupu: <b class="num" id="simAtrVal">6,0°</b></label>
+      <input type="range" id="simAtr" min="-15" max="15" step="0.5" value="6">
+      <button class="btn" id="simPlace">Zvednout a znovu přiložit</button>
+    </div>
+  </main>
+  <footer class="resfoot">
+    <button class="btn primary big" id="saveExam">Uložit vyšetření</button>
+    <div class="rfrow"><button class="btn" id="copyLine"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Do karty</button><button class="btn" id="newExamBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nové vyšetření</button></div>
+  </footer>
+</div>
 
-    <!-- MĚŘENÍ -->
-    <section id="v-measure" class="view" aria-label="Měření ATR">
-      <div class="seg" role="tablist" id="regionSeg">
-        <button role="tab" data-r="th" aria-selected="true">Hrudní<small>Th</small></button>
-        <button role="tab" data-r="tl" aria-selected="false">Přechod<small>Th‑L</small></button>
-        <button role="tab" data-r="l" aria-selected="false">Bederní<small>L</small></button>
-      </div>
-      <div class="measure">
-        <div class="gaugeWrap" id="gaugeWrap" title="Klepnutím zaznamenáte aktuální hodnotu"><canvas id="gauge"></canvas></div>
-        <div class="side">
-          <div class="readout">
-            <span class="label" id="regionLabel">Hrudní oblast · ATR</span>
-            <div class="bignum" id="atrVal">0,0<sup>°</sup></div>
-            <div class="row" style="justify-content:space-between">
-              <span class="sideword" id="atrSide">—</span>
-              <span class="pill" id="statePill"><span class="dot"></span><span id="stateText">Přiložte telefon</span></span>
-            </div>
-            <div class="prog" aria-hidden="true"><i id="lockProg"></i></div>
-          </div>
-          <div>
-            <div class="row small" style="justify-content:space-between"><span class="muted">Poloha telefonu</span><span id="poseVal" class="muted">–</span></div>
-            <div class="row small" style="justify-content:space-between"><span class="muted">Sklon zad v místě</span><span><b class="num" id="pitchVal">–</b> <span id="bendHint" class="muted"></span></span></div>
-          </div>
-          <div>
-            <div class="label" style="margin-bottom:6px">Přiložení (průměr ze 3)</div>
-            <div class="trials" id="trials"></div>
-          </div>
-          <div class="row">
-            <button class="btn" id="lockNow">Zaznamenat teď</button>
-            <button class="btn ghost" id="clearRegion">Smazat oblast</button>
-            <button class="btn primary" id="measScan">Skenovat páteř</button>
-          </div>
-          <div class="simctl" id="simCtl" hidden>
-            <span class="label">Simulace pacienta</span>
-            <label class="small" for="simAtr">Skutečná rotace trupu: <b class="num" id="simAtrVal">6,0°</b></label>
-            <input type="range" id="simAtr" min="-15" max="15" step="0.5" value="6">
-            <button class="btn" id="simPlace">Zvednout a znovu přiložit</button>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="row" style="justify-content:space-between"><h2>Dnešní vyšetření</h2><span class="small muted" id="examDate"></span></div>
-        <table class="summary" id="summary"></table>
-        <div class="field"><label class="label" for="examNote">Poznámka</label><input id="examNote" placeholder="např. stav po korzetu, bolest, sport"></div>
-        <button class="btn primary big" id="saveExam">Uložit vyšetření</button>
-      </div>
-    </section>
-
-    <!-- SKEN -->
-    <section id="v-scan" class="view" aria-label="Sken páteře" hidden>
-      <div class="card">
-        <h2>Sken páteře jedním tahem</h2>
-        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Skenovat páteř a přiložte telefon napříč zády u C7. Nahrávání začne samo, když telefon chvíli podržíte v klidu, nebo hned po dotyku displeje. Po pípnutí telefon plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
-        <button class="btn primary big" id="scanStart">Skenovat páteř</button>
-        <div class="scanLive" id="scanLive" hidden>
-          <div class="bignum" id="scanVal" style="font-size:3.4rem">0,0<sup>°</sup></div>
-          <div class="grid" style="display:grid;gap:6px">
-            <span id="scanState" class="pill">Připravte se…</span>
-            <button class="btn" id="scanStop">Ukončit sken</button>
-          </div>
-        </div>
-      </div>
+<section id="page" hidden>
+  <header class="rhead"><button class="xbtn" id="pageBack" aria-label="Zpět"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><div class="t"><b id="pageTitle"></b></div></header>
+  <div class="sbody" id="main">
+    <div id="v-scan" class="view" hidden>
       <div class="card">
         <div class="row" style="justify-content:space-between"><h3>Profil rotace C7 → S1</h3><span class="small muted" id="scanSource"></span></div>
-        <div class="chartBox"><canvas id="scanChart"></canvas></div>
-        <div class="peaks" id="peaks"><p class="small muted">Zatím bez skenu. Ukázka profilu se objeví po prvním skenu.</p></div>
-        <button class="btn" id="scanAdopt" disabled>Připojit sken k dnešnímu vyšetření</button>
+        <div class="chartBox" style="aspect-ratio:16/10"><canvas id="scanChart"></canvas></div>
+        <div class="peaks" id="peaks"><p class="small muted">Zatím bez skenu.</p></div>
       </div>
-    </section>
-
-    <!-- FOTO -->
-    <section id="v-photo" class="view" aria-label="Fotodokumentace postury" hidden>
-      <div class="card">
-        <h2>Postura s olovnicí</h2>
-        <p class="small muted">Telefon drží svislou čáru podle gravitace a vyfotí sám, až je dokonale srovnaný. Předchozí snímek pacienta se promítne jako průsvitná šablona, takže kontrolní fotky jsou vždy ze stejného místa. Pak klepnutím označíte body a aplikace spočítá sklon ramen, lopatek, pánve a vychýlení trupu.</p>
-        <div class="cam" id="cam">
-          <video id="video" playsinline muted></video>
-          <canvas id="camOverlay"></canvas>
-          <div class="camMsg" id="camMsg">Kamera je vypnutá.</div>
-        </div>
-        <div class="row">
-          <button class="btn primary" id="camBtn">Zapnout kameru</button>
-          <button class="btn" id="shootBtn" disabled>Vyfotit</button>
-          <label class="row small"><input type="checkbox" id="autoShot" checked> Auto‑spoušť při vyrovnání</label>
-          <label class="row small"><input type="checkbox" id="ghostOn" checked> Šablona minulé fotky</label>
-        </div>
-        <label class="small row">Pohled: <select id="photoView" class="btn" style="min-height:36px;padding:4px 8px"><option value="posterior">zezadu</option><option value="anterior">zepředu</option></select></label>
-        <label class="small row">nebo nahrát fotku: <input type="file" id="photoFile" accept="image/*"></label>
-      </div>
-      <div class="card" id="photoEdit" hidden>
-        <h3>Označení bodů</h3>
-        <p class="small muted" id="toolHint">Vyberte měření a klepněte na dva body.</p>
-        <div class="tools" id="tools"></div>
-        <div class="annot"><canvas id="annot"></canvas></div>
-        <div class="peaks" id="photoResults"></div>
-        <div class="row"><button class="btn primary" id="savePhoto">Uložit k pacientovi</button><button class="btn ghost" id="discardPhoto">Zahodit</button></div>
-      </div>
-      <div class="card">
-        <h3>Fotky pacienta</h3>
-        <div class="thumbs" id="thumbs"></div>
-        <p class="small muted" id="thumbsEmpty">Žádné uložené fotky u vybraného pacienta.</p>
-      </div>
-    </section>
-
-    <!-- PACIENTI -->
-    <section id="v-patients" class="view" aria-label="Pacienti a vývoj" hidden>
+      <div class="card prose small"><h3>Jak skenovat</h3><ul>
+        <li>Pacient v Adamsově předklonu. Telefon na šířku přiložte napříč zády u C7.</li>
+        <li>Stiskněte SKEN. Se samospouští máte 3 sekundy na usazení telefonu (délku změníte tlačítkem s hodinami).</li>
+        <li>Po pípnutí telefon plynule posuňte po trnech až ke kříži, asi 4–6 s. Zvednutím se sken ukončí sám.</li>
+        <li>Tón se zvyšuje s rotací a ozývá se ze strany hrbu. Sken najde vrcholy, rozhodující hodnotu změřte v místě vrcholu třemi přiloženími.</li></ul></div>
+    </div>
+    <div id="v-patients" class="view" aria-label="Pacienti a vývoj" hidden>
       <div class="card">
         <div class="row" style="justify-content:space-between"><h2>Pacienti</h2><button class="btn" id="newPatient2">Nový pacient</button></div>
         <ul class="plist" id="plist"></ul>
@@ -336,10 +267,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <button class="btn danger" id="delPatient">Smazat pacienta</button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- NASTAVENÍ -->
-    <section id="v-settings" class="view" aria-label="Nastavení" hidden>
+    <div id="v-settings" class="view" aria-label="Nastavení" hidden>
       <div class="card">
         <h2>Kalibrace nuly</h2>
         <p class="small muted">Stačí dva kroky a nic se neklepe: postavte telefon na stůl na hranu, na které měříte, a nechte ho chvíli v klidu. Po pípnutí ho otočte dokola displejem od sebe. Aplikace sama pozná hranu a odečte vliv tlačítek, krytu i nerovného stolu. Náklon telefonu k vám nebo od vás měření neovlivňuje.</p>
@@ -353,9 +283,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <path d="M30 120 C 90 40, 270 40, 330 120" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
           <path d="M180 30 v 100" stroke="var(--muted)" stroke-dasharray="4 5"/>
           <g transform="rotate(-6 180 58)"><rect x="100" y="44" width="160" height="30" rx="7" fill="var(--surface2)" stroke="var(--ink)" stroke-width="2"/><circle id="dgCam" cx="248" cy="59" r="5" fill="var(--accent)"/></g>
-          <text x="14" y="142" font-size="13" fill="var(--muted)" font-family="Archivo, sans-serif" id="dgLeft">levá strana pacienta</text>
-          <text x="346" y="142" font-size="13" fill="var(--muted)" text-anchor="end" font-family="Archivo, sans-serif" id="dgRight">pravá strana pacienta</text>
-          <text x="186" y="26" font-size="12" fill="var(--muted)" font-family="Archivo, sans-serif">trny obratlů</text>
+          <text x="14" y="142" font-size="13" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif" id="dgLeft">levá strana pacienta</text>
+          <text x="346" y="142" font-size="13" fill="var(--muted)" text-anchor="end" font-family="IBM Plex Sans, sans-serif" id="dgRight">pravá strana pacienta</text>
+          <text x="186" y="26" font-size="12" fill="var(--muted)" font-family="IBM Plex Sans, sans-serif">trny obratlů</text>
         </svg>
         <label class="field"><span class="label">Fotoaparát (horní hrana telefonu) míří k pacientově</span>
           <select id="camSide"><option value="right">pravé straně</option><option value="left">levé straně</option></select></label>
@@ -375,9 +305,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <label class="field"><span class="label">Doba ustálení před zámkem</span>
           <select id="stableMs"><option value="800">0,8 s</option><option value="1200">1,2 s</option><option value="1800">1,8 s</option></select></label>
         <div>
-          <label class="field" style="padding-bottom:6px"><span class="label">Na šířku: panel s kartami</span><select id="railSide"><option value="right">vpravo (pravá ruka)</option><option value="left">vlevo (levá ruka)</option></select></label>
-          <label class="switch"><span>Režim přístroje: když telefon stojí na hraně, ukáže se celá stupnice jako na Bunnellově skoliometru</span><input type="checkbox" id="instr"></label>
-          <label class="switch"><span>Automatický zámek hodnoty po ustálení</span><input type="checkbox" id="autoLock"></label>
+          <label class="field" style="padding-bottom:6px"><span class="label">Samospoušť skenu</span><select id="scanDelay"><option value="0">vypnuto, start hned</option><option value="2">2 s</option><option value="3">3 s</option><option value="5">5 s</option></select></label>
+          <label class="switch"><span>Automatický zápis po ustálení (jinak zapisuje klepnutí na displej)</span><input type="checkbox" id="autoLock"></label>
           <label class="switch"><span>Zvukové signály</span><input type="checkbox" id="sound"></label>
           <label class="switch"><span>Vibrace (Android)</span><input type="checkbox" id="haptic"></label>
           <label class="switch"><span>Hlasové hlášení výsledků</span><input type="checkbox" id="voice"></label>
@@ -400,29 +329,54 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <p class="small">Aplikace funguje i bez internetu. Na iPhonu otevřete adresu v Safari a zvolte Sdílet → Přidat na plochu. Na Androidu v Chromu menu ⋮ → Instalovat aplikaci. Data pacientů zůstávají jen v tomto telefonu; u pacientů používejte kód nebo iniciály.</p>
         <div class="row"><button class="btn" id="exportAll">Záloha všech dat (JSON)</button><label class="btn">Obnovit zálohu<input type="file" id="importAll" accept="application/json" hidden></label><button class="btn danger" id="wipeAll">Smazat všechna data</button></div>
       </div>
-    </section>
-  </main>
-  <nav class="tabs" role="tablist" aria-label="Sekce">
-    <button role="tab" data-v="measure" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 16a9 9 0 0 1 18 0"/><circle cx="9" cy="14" r="2" fill="currentColor" stroke="none"/></svg>Měření</button>
-    <button role="tab" data-v="scan" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20"/><path d="M8 5c3 1 5 3 4 7s-3 6 0 9"/><path d="M5 9h3M16 15h3"/></svg>Sken</button>
-    <button role="tab" data-v="photo" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M12 2v3"/></svg>Postura</button>
-    <button role="tab" data-v="patients" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg>Pacienti</button>
-  </nav>
+    </div>
+
+  </div>
+</section>
+
+<div id="studio" hidden aria-label="Měření, klepnutím zapíšete hodnotu"><div id="stage">
+  <canvas id="sCanvas"></canvas>
+  <div class="scount" id="sCount" hidden></div>
+  <div class="stop">
+    <div class="regs glass" id="sRegs"></div>
+    <span class="sgrow"></span>
+    <button class="gbtn glass" id="sUndo" aria-label="Vrátit poslední zápis"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="gbtn glass" id="sMenu" aria-label="Nabídka"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18.5" r="1.2"/></svg></button>
+  </div>
+  <div class="sbot">
+    <button class="tbtn glass" id="sTimer" aria-label="Samospoušť skenu"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg><span id="sTimerTxt">3 s</span></button>
+    <span class="shint" id="sHint">Klepnutím kamkoli zapíšete hodnotu</span>
+    <div class="shut"><button class="shutter" id="sShutter" aria-label="Skenovat páteř"><i></i></button><small id="sShutTxt">SKEN</small></div>
+  </div>
+</div></div>
+
+<div class="menu" id="menu" hidden role="menu">
+  <button class="topt" data-a="measure" role="menuitem"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2.5"/></svg><span><b>Měřit</b><small>nebo otočte telefon na šířku</small></span></button>
+  <button class="topt" data-a="results" role="menuitem"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10 8h4M10 12h4"/></svg><span><b>Výsledky</b><small>nebo otočte telefon na výšku</small></span></button>
+  <button class="topt" data-a="patient" role="menuitem"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span><b>Pacient</b><small id="mPat">Bez pacienta</small></span></button>
+  <button class="topt" data-a="patients" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg><span><b>Pacienti a vývoj</b><small>historie, zpráva, export</small></span></button>
+  <button class="topt" data-a="scan" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M8 5c3 1 5 3 4 7s-3 6 0 9"/></svg><span><b>Profil skenu</b><small>křivka rotace C7 → S1</small></span></button>
+  <div class="msep"></div>
+  <button class="topt" data-a="auto" role="menuitemcheckbox" aria-checked="false"><svg class="i ck" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg><span><b>Automatický zápis</b><small>po ustálení telefonu</small></span></button>
+  <button class="topt" data-a="clear" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span><b>Smazat oblast</b><small id="mReg">hrudní</small></span></button>
+  <button class="topt" data-a="settings" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span><b>Nastavení a kalibrace</b><small>nula, strana, zvuk, prahy</small></span></button>
 </div>
 
 <div class="overlay" id="startOverlay">
   <div class="sheetBox">
     <div class="startHero">
-      <span class="label">Digitální skoliometr · ATR</span>
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 16a9 9 0 0 1 18 0"/><circle cx="8.5" cy="13.2" r="2.2" fill="currentColor" stroke="none"/></svg></div>
+      <span class="label" style="color:var(--pt)">Digitální skoliometr · ATR</span>
       <h1>Rotace trupu v Adamsově předklonu</h1>
     </div>
     <ol class="steps small">
       <li>Pacient se předkloní, paže volně visí, dlaně u sebe.</li>
-      <li>Postavte telefon napříč zády na dlouhou hranu, displejem k sobě, středem na trny, jako Bunnellův skoliometr. Výchozí nastavení počítá s tím, že stojíte za pacientem (změníte v Nastavení).</li>
-      <li>Držte lehce. Po ustálení se hodnota sama zamkne, pípne a přečte. Zvedněte a přiložte znovu, celkem třikrát.</li>
+      <li>Otočte telefon na šířku a postavte ho napříč zády na dlouhou hranu, displejem k sobě, středem na trny. Stojíte za pacientem.</li>
+      <li>Klepnutím na displej zapíšete hodnotu. Po třech přiloženích aplikace sama přejde na další oblast.</li>
+      <li>Otočte telefon na výšku a uvidíte výsledky.</li>
     </ol>
-    <p class="small muted">Při prvním použití proveďte kalibraci nuly v Nastavení (20 s na stole).</p>
     <button class="btn primary big" id="startBtn">Začít měřit</button>
+    <p class="small" style="color:rgba(255,255,255,.55);text-align:center">Poprvé proveďte kalibraci nuly (Nabídka → Nastavení, 20 s na stole).</p>
   </div>
 </div>
 
@@ -443,9 +397,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
-<div id="instrument" hidden aria-label="Režim přístroje, klepnutím zaznamenáte hodnotu"><canvas id="instrCanvas"></canvas><button class="btn" id="instrClose">Zavřít stupnici</button><button class="btn primary" id="instrScan">Skenovat páteř</button></div>
 <div class="toast" id="toast" hidden></div>
-
 <script>
 (() => {
 'use strict';
@@ -461,12 +413,14 @@ const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platfor
 
 /* ---------- data ---------- */
 const LS_KEY = 'skoliometr.v1';
-const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, standBehind: true, railRight: true, instr: true, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: true, stableMs: 1200, calibrated: false, calInfo: '' };
+const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, standBehind: true, scanDelay: 3, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: false, stableMs: 1200, calibrated: false, calInfo: '' };
 let DB = { patients: [], exams: [], settings: {}, current: null };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.patients) DB = s; } catch (e) {}
 DB.settings = Object.assign({}, DEF, DB.settings || {});
 const ST = DB.settings;
 if (!ST.offsets) ST.offsets = { flat: ST.offset || 0 };
+if (!ST.v2) { ST.autoLock = false; ST.v2 = true; } // v2: tap-to-record is the default workflow
+if (!ST.scanDelay && ST.scanDelay !== 0) ST.scanDelay = 3;
 if (!ST.cal) ST.cal = ST.calibrated ? { flat: ST.calInfo || 'kalibrováno' } : {};
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); } catch (e) { toast('Data se nepodařilo uložit, úložiště prohlížeče je nedostupné.'); } }
 const patient = id => DB.patients.find(p => p.id === id);
@@ -587,9 +541,11 @@ $('#simAtr').addEventListener('input', e => { SIM.target = +e.target.value; $('#
 $('#simPlace').addEventListener('click', () => { SIM.lift = performance.now() + 450; SIM.cur = SIM.target + (Math.random() - .5) * 1.2; });
 
 /* ---------- measurement state ---------- */
-const M = { region: 'th', state: 'away', buf: [], stableStart: 0, lockVal: null, ticks: 0, exam: null };
+const M = { region: 'th', state: 'away', buf: [], stableStart: 0, lockVal: null, ticks: 0, exam: null, hist: [] };
 function newExam() { return { id: uid(), date: new Date().toISOString(), regions: { th: [], tl: [], l: [] }, scan: null, note: '' }; }
 M.exam = newExam();
+// unfinished exam survives closing the app (same day only)
+if (DB.draft && DB.draft.regions && new Date(DB.draft.date).toDateString() === new Date().toDateString()) M.exam = DB.draft;
 function onBack(a, p) { const [x, y, z] = S.u; const n = Math.hypot(x, y, z) || 1; return Math.abs(a) < 35 && Math.abs(p) < 65 && !!poseOf(); }
 
 function tick(now) {
@@ -619,54 +575,95 @@ function tick(now) {
   }
 }
 function record(v) {
-  const arr = M.exam.regions[M.region];
+  const r = M.region, arr = M.exam.regions[r];
   if (arr.length >= 3) arr.shift();
-  arr.push(Math.round(v * 10) / 10);
+  arr.push(Math.round(v * 10) / 10); M.hist.push(r);
   M.state = 'locked'; M.lockVal = v; M.stableStart = 0;
   chord(); buzz([35, 50, 35]);
   const st = stats(arr);
   let msg = `${sayDeg(v)} ${sideWord(v)}`;
-  if (arr.length === 3) msg += `. Průměr ${REG[M.region].name.toLowerCase()} ${sayDeg(st.m)} ${sideWord(st.m)}`;
-  else msg += `. Zvedněte a přiložte znovu.`;
+  if (arr.length === 3) {
+    msg += `. Průměr ${sayDeg(st.m)} ${sideWord(st.m)}`;
+    // guided exam: move on to the next region that is not finished yet
+    const nx = RK.slice(RK.indexOf(r) + 1).concat(RK.slice(0, RK.indexOf(r))).find(k => M.exam.regions[k].length < 3);
+    if (nx) { setRegion(nx); msg += `. Dál ${REG[nx].name.toLowerCase()}`; }
+    else msg += '. Hotovo, otočte telefon pro výsledky';
+  }
   say(msg);
-  renderTrials(); renderSummary();
+  saveDraft(); renderResults();
 }
 function lockNow() {
   const now = performance.now(); const vals = M.buf.filter(s => now - s.t < 500).map(s => s.a);
   if (!vals.length) { toast('Žádná data ze senzoru.'); return; }
   record(vals.reduce((x, y) => x + y, 0) / vals.length);
 }
-$('#lockNow').addEventListener('click', lockNow);
-$('#measScan').addEventListener('click', () => armScan());
-$('#gaugeWrap').addEventListener('click', lockNow);
-$('#clearRegion').addEventListener('click', () => { M.exam.regions[M.region] = []; M.state = 'away'; renderTrials(); renderSummary(); });
-function setRegion(r) {
-  M.region = r; $$('#regionSeg button').forEach(b => b.setAttribute('aria-selected', b.dataset.r === r));
-  $('#regionLabel').textContent = `${REG[r].name} oblast · ATR`; renderTrials();
+function undoLast() {
+  const r = M.hist.pop();
+  if (!r || !M.exam.regions[r].length) { toast('Není co vrátit.'); return; }
+  const v = M.exam.regions[r].pop(); setRegion(r); M.state = 'away';
+  beep(330, .12, .1); buzz(30); toast(`Smazáno ${fmt(Math.abs(v))}° (${REG[r].short})`);
+  saveDraft(); renderResults();
 }
-$$('#regionSeg button').forEach(b => b.addEventListener('click', () => setRegion(b.dataset.r)));
-
-function renderTrials() {
-  const arr = M.exam.regions[M.region]; const st = stats(arr);
-  let h = '';
-  for (let i = 0; i < 3; i++) { const v = arr[i]; h += `<div class="trial ${v != null ? 'filled' : ''}"><span><small>${i + 1}.</small>${v != null ? fmt(Math.abs(v)) + '° ' + (Math.abs(v) < .5 ? '' : v > 0 ? 'P' : 'L') : '–'}</span></div>`; }
-  h += `<div class="trial mean"><span><small>PRŮMĚR ± SD</small>${st ? fmt(Math.abs(st.m)) + '° ' + (Math.abs(st.m) < .5 ? '' : st.m > 0 ? 'P' : 'L') + (st.n > 1 ? `<br><small>± ${fmt(st.sd)}°</small>` : '') : '–'}</span></div>`;
-  $('#trials').innerHTML = h;
+function clearRegion() { M.exam.regions[M.region] = []; M.hist = M.hist.filter(k => k !== M.region); M.state = 'away'; saveDraft(); renderResults(); renderRegs(); }
+function setRegion(r) { M.region = r; renderRegs(); }
+function saveDraft() { DB.draft = M.exam; save(); }
+function sideShort(v) { return Math.abs(v) < .5 ? '' : v > 0 ? 'P' : 'L'; }
+// studio region chips: Th ●●○
+function renderRegs() {
+  $('#sRegs').innerHTML = RK.map(k => { const n = M.exam.regions[k].length; return `<button class="reg${k === M.region ? ' cur' : ''}${n >= 3 ? ' done' : ''}" data-r="${k}" aria-pressed="${k === M.region}">${REG[k].short}<span class="d">${[0, 1, 2].map(i => `<i class="${i < n ? 'f' : ''}"></i>`).join('')}</span></button>`; }).join('');
+  $('#mReg').textContent = REG[M.region].name.toLowerCase();
 }
-function regionResult(arr) { const st = stats(arr); return st; }
-function renderSummary() {
-  const ex = M.exam; let h = '<tr><th>Oblast</th><th>ATR</th><th></th></tr>';
-  RK.forEach(k => {
-    const st = stats(ex.regions[k]);
-    if (!st) { h += `<tr><td>${REG[k].name}</td><td class="v muted">–</td><td></td></tr>`; return; }
-    const c = cls(st.m);
-    h += `<tr><td>${REG[k].name}</td><td class="v"><b>${fmt(Math.abs(st.m))}°</b> ${Math.abs(st.m) < .5 ? '' : st.m > 0 ? 'P' : 'L'} <span class="small muted">n=${st.n}</span></td><td><span class="pill ${c.k}"><span class="dot"></span>${c.t}</span></td></tr>`;
-  });
-  if (ex.scan) h += `<tr><td>Sken</td><td colspan="2" class="small" style="text-align:left;white-space:normal">${scanSummaryText(ex.scan)}</td></tr>`;
-  $('#summary').innerHTML = h;
+$('#sRegs').addEventListener('click', e => { const b = e.target.closest('.reg'); if (b) { setRegion(b.dataset.r); beep(700, .04, .05); } });
+const renderSummary = () => renderResults(), renderTrials = () => renderRegs();
+// portrait result card
+const LIM = 15;
+function renderResults() {
+  const ex = M.exam, prev = DB.current ? lastExam(DB.current) : null;
   $('#examDate').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const pos = v => 50 + clamp(v, -LIM, LIM) / LIM * 50;
+  const w = ST.thrWarn / LIM * 50, r = ST.thrRef / LIM * 50;
+  const zones = `linear-gradient(90deg,var(--bad-bg) 0 ${50 - r}%,var(--warn-bg) ${50 - r}% ${50 - w}%,var(--ok-bg) ${50 - w}% ${50 + w}%,var(--warn-bg) ${50 + w}% ${50 + r}%,var(--bad-bg) ${50 + r}% 100%)`;
+  $('#rList').innerHTML = RK.map(k => {
+    const arr = ex.regions[k], st = stats(arr), c = st ? cls(st.m) : null;
+    const ps = prev && prev.id !== ex.id ? stats(prev.regions[k]) : null;
+    const head = st ? `<span class="val">${fmt(Math.abs(st.m))}°</span><span class="sd">${sideShort(st.m)}</span>` : `<span class="none">nezměřeno</span>`;
+    const bar = `<div class="rbar"><div class="z" style="background:${zones}"></div><i class="c"></i>${arr.map(v => `<i class="t" style="left:${pos(v)}%"></i>`).join('')}${st ? `<i class="m ${c.k}" style="left:${pos(st.m)}%"></i>` : ''}</div><div class="rscale"><span>L ${LIM}°</span><span>0</span><span>${LIM}° P</span></div>`;
+    let meta = arr.map((v, i) => `<button class="tchip" data-r="${k}" data-i="${i}" aria-label="Smazat přiložení ${i + 1}">${fmt(Math.abs(v))}° ${sideShort(v)}</button>`).join('');
+    if (st && st.n > 1) meta += `<span class="delta">± ${fmt(st.sd)}°</span>`;
+    if (st) meta += `<span class="pill ${c.k}"><span class="dot"></span>${c.t}</span>`;
+    if (st && ps) { const d = st.m - ps.m; meta += `<span class="delta${Math.abs(d) >= 3 ? ' sig' : ''}">${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))}° od ${new Date(prev.date).toLocaleDateString('cs-CZ')}</span>`; }
+    return `<div class="rr ${c ? c.k : ''}"><div class="top"><div class="nm"><b>${REG[k].name}</b><code>${REG[k].short}</code></div>${head}</div>${bar}<div class="rmeta">${meta}</div></div>`;
+  }).join('');
+  const sc = ex.scan;
+  $('#rScan').innerHTML = sc
+    ? `<div class="row" style="justify-content:space-between"><h3>Sken páteře</h3><button class="btn ghost" id="rScanOpen" style="min-height:36px">Detail</button></div><div class="chartBox" style="aspect-ratio:3/1"><canvas id="rScanChart"></canvas></div><p class="small muted">${scanSummaryText(sc)}</p>`
+    : `<div class="row" style="justify-content:space-between"><h3>Sken páteře</h3><span class="small muted">zatím bez skenu</span></div><p class="small muted">Na šířku stiskněte SKEN (vpravo dole), telefon se samospouští usadíte u C7 a pak ho posunete ke kříži.</p>`;
+  if (sc) requestAnimationFrame(() => drawMiniScan(sc));
+  $('#examNote').value = ex.note || '';
+  $('#mPat').textContent = curPatient() ? curPatient().code : 'Bez pacienta';
+  renderRegs();
 }
-$('#examNote').addEventListener('input', e => M.exam.note = e.target.value);
+function drawMiniScan(sc) {
+  const c = $('#rScanChart'); if (!c) return; const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
+  const pts = sc.pts || []; if (!pts.length) return;
+  const lim = Math.max(8, Math.ceil(Math.max(...pts.map(p => Math.abs(p[1]))) / 5) * 5);
+  const X = x => 6 + x * (w - 12), Y = a => h / 2 - a / lim * (h / 2 - 6);
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = css('--warn'); [ST.thrWarn, -ST.thrWarn].forEach(a => { ctx.beginPath(); ctx.moveTo(0, Y(a)); ctx.lineTo(w, Y(a)); ctx.stroke(); }); ctx.setLineDash([]);
+  ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1])));
+  ctx.strokeStyle = css('--accent'); ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.fillStyle = css('--muted'); ctx.font = `600 10px ${css('--f-num')}`; ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('C7', 4, 2); ctx.textAlign = 'right'; ctx.fillText('S1', w - 4, 2);
+  ctx.textBaseline = 'middle'; ctx.fillText('P', w - 4, Y(lim * .7)); ctx.fillText('L', w - 4, Y(-lim * .7));
+}
+$('#rScan').addEventListener('click', e => { if (e.target.closest('#rScanOpen') || e.target.closest('canvas')) show('scan'); });
+// two taps delete a single trial
+$('#rList').addEventListener('click', e => {
+  const b = e.target.closest('.tchip'); if (!b) return;
+  if (!b.classList.contains('arm')) { $$('.tchip.arm').forEach(x => x.classList.remove('arm')); b.classList.add('arm'); b.textContent = 'Smazat?'; setTimeout(() => { if (b.isConnected && b.classList.contains('arm')) renderResults(); }, 3000); return; }
+  const k = b.dataset.r, i = +b.dataset.i; M.exam.regions[k].splice(i, 1); const hi = M.hist.lastIndexOf(k); if (hi >= 0) M.hist.splice(hi, 1);
+  saveDraft(); renderResults(); toast('Přiložení smazáno.');
+});
+$('#examNote').addEventListener('input', e => { M.exam.note = e.target.value; saveDraft(); });
 $('#saveExam').addEventListener('click', () => {
   const has = RK.some(k => M.exam.regions[k].length) || M.exam.scan;
   if (!has) { toast('Nejdřív změřte alespoň jednu oblast nebo udělejte sken.'); return; }
@@ -676,85 +673,36 @@ $('#saveExam').addEventListener('click', () => {
 let pendingSave = false;
 function doSaveExam() {
   const ex = JSON.parse(JSON.stringify(M.exam)); ex.patientId = DB.current; ex.date = new Date().toISOString();
-  DB.exams.push(ex); save();
+  DB.exams.push(ex); DB.draft = null; save();
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean);
   say('Uloženo. ' + parts.join('. '));
   toast(`Vyšetření uloženo k pacientovi ${curPatient().code}.`);
-  M.exam = newExam(); $('#examNote').value = ''; setRegion('th'); renderSummary(); renderPatients();
+  startNewExam(); renderPatients();
 }
+function startNewExam() { M.exam = newExam(); M.hist = []; DB.draft = null; save(); setRegion('th'); renderResults(); }
+let newArm = 0;
+$('#newExamBtn').addEventListener('click', e => {
+  const has = RK.some(k => M.exam.regions[k].length) || M.exam.scan;
+  if (has && Date.now() - newArm > 3000) { newArm = Date.now(); toast('Neuložené hodnoty se smažou. Klepněte znovu.'); return; }
+  startNewExam(); toast('Nové vyšetření.');
+});
+function examLine(ex) {
+  const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].short} ${fmt(Math.abs(st.m))}° ${sideShort(st.m) || '0'}${st.n > 1 ? ` (±${fmt(st.sd)}, n=${st.n})` : ''}` : null; }).filter(Boolean);
+  let t = `ATR (skoliometr, Adams) ${new Date(ex.date).toLocaleDateString('cs-CZ')}: ${parts.join(', ') || 'neměřeno'}`;
+  const prev = DB.current ? lastExam(DB.current) : null;
+  if (prev && prev.id !== ex.id) { const d = RK.map(k => { const a = stats(ex.regions[k]), b = stats(prev.regions[k]); return a && b ? `${REG[k].short} ${a.m - b.m >= 0 ? '+' : '−'}${fmt(Math.abs(a.m - b.m))}°` : null; }).filter(Boolean); if (d.length) t += `; změna od ${new Date(prev.date).toLocaleDateString('cs-CZ')}: ${d.join(', ')}`; }
+  if (ex.scan) t += `; sken: ${scanSummaryText(ex.scan)}`;
+  if (ex.note) t += `; ${ex.note}`;
+  return t + '.';
+}
+$('#copyLine').addEventListener('click', () => copyText(examLine(M.exam)));
 
-/* ---------- gauge ---------- */
+/* ---------- canvas helper ---------- */
 function fitCanvas(c) {
   const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
   const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
   if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
   const ctx = c.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0); return { ctx, w: r.width, h: r.height };
-}
-function drawGauge() {
-  const c = $('#gauge'); const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
-  const col = { tube: css('--tube'), edge: css('--tube-edge'), ink: css('--ink'), muted: css('--muted'), ok: css('--ok'), warn: css('--warn'), bad: css('--bad'), ball: css('--ball'), accent: css('--accent') };
-  const vertical = h > w * 1.1; const L = vertical ? h : w, T = vertical ? w : h;
-  const a = screenAngle() / D; const dyx = -Math.sin(a), dyy = Math.cos(a); // device +y on screen (y up)
-  // keep the tube concave-up in landscape (mirror instead of rotating 180°)
-  let rot = 0, flip = 1;
-  if (vertical) rot = dyy >= 0 ? -Math.PI / 2 : Math.PI / 2; else flip = dyx >= 0 ? 1 : -1;
-  ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(rot); ctx.scale(flip, 1);
-  const tubeW = clamp(Math.min(T * .2, L * .085), 14, 40); const chord = L - tubeW * 4;
-  const span = Math.min(24 / D, 2 * Math.atan(Math.max(.01, 1.6 * (T - tubeW * 2 - 50) / chord))); const K = span / (32 / D);
-  const Rt = chord / 2 / Math.sin(span); const sag = Rt * (1 - Math.cos(span));
-  const y0 = (sag + tubeW / 2 - 36) / 2;
-  const cy = y0 - Rt;
-  const P = (phi, r = Rt) => [r * Math.sin(phi * K), cy + r * Math.cos(phi * K)];
-  // tube
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = col.edge; ctx.lineWidth = tubeW + 3; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.03, Math.PI / 2 - span * 1.03, true); ctx.stroke();
-  ctx.strokeStyle = col.tube; ctx.lineWidth = tubeW; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.03, Math.PI / 2 - span * 1.03, true); ctx.stroke();
-  // zones along the outer edge
-  const zr = Rt + tubeW / 2 + 4; ctx.lineWidth = 4; ctx.lineCap = 'butt';
-  const zone = (f, t, c) => { [1, -1].forEach(sg => { ctx.strokeStyle = c; ctx.beginPath(); const A = Math.PI / 2 - sg * f / D * K, B = Math.PI / 2 - sg * t / D * K; ctx.arc(0, cy, zr, Math.min(A, B), Math.max(A, B)); ctx.stroke(); }); };
-  zone(0, ST.thrWarn, col.ok); zone(ST.thrWarn, ST.thrRef, col.warn); zone(ST.thrRef, 32, col.bad);
-  // ticks + labels
-  ctx.strokeStyle = col.muted; ctx.fillStyle = col.ink;
-  for (let d = -30; d <= 30; d++) {
-    const phi = d / D, major = d % 5 === 0; const r1 = zr + 4, r2 = r1 + (major ? 9 : 4);
-    const [x1, y1] = P(phi, r1), [x2, y2] = P(phi, r2); ctx.lineWidth = major ? 1.6 : 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    if (major) { const [lx, ly] = P(phi, r2 + 11); ctx.save(); ctx.translate(lx, ly); ctx.rotate(-rot); ctx.scale(flip, 1); ctx.font = `600 ${clamp(T * .085, 10, 13)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = d === 0 ? col.accent : col.muted; ctx.fillText(String(Math.abs(d)), 0, 0); ctx.restore(); }
-  }
-  // spinous-process notch marker
-  const [nx, ny] = P(0, Rt - tubeW / 2 - 3); ctx.fillStyle = col.accent; ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(nx - 6, ny - 9); ctx.lineTo(nx + 6, ny - 9); ctx.closePath(); ctx.fill();
-  // end labels (patient side)
-  const sf = sideFactor(); const plusSide = sf > 0 ? 'P' : 'L', minusSide = sf > 0 ? 'L' : 'P';
-  [[1, plusSide], [-1, minusSide]].forEach(([sg, t]) => { const ph = sg * 33 / D * K, [ex, ey] = P(sg * 33 / D), dd = tubeW * 1.35; const lx = ex + sg * Math.cos(ph) * dd, ly = ey - sg * Math.sin(ph) * dd; ctx.save(); ctx.translate(lx, ly); ctx.rotate(-rot); ctx.scale(flip, 1); ctx.font = `800 ${clamp(T * .13, 13, 20)}px ${css('--f-ui')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = col.ink; ctx.fillText(t, 0, 0); ctx.restore(); });
-  // locked marker
-  if (M.state === 'locked' && M.lockVal != null) {
-    const dv = M.lockVal * sf; const [lx, ly] = P(clamp(-dv, -31, 31) / D);
-    ctx.strokeStyle = col.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .62, 0, Math.PI * 2); ctx.stroke();
-  }
-  // ball: rolls to the physically lower end
-  const dv = S.has || S.sim ? devAngle() : 0; const phi = clamp(-dv, -32.5, 32.5) / D; const [bx, by] = P(phi);
-  const c2 = cls(atr()); ctx.fillStyle = M.state === 'away' ? col.muted : col[c2.k] || col.ball;
-  ctx.beginPath(); ctx.arc(bx, by, tubeW * .42, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(bx - tubeW * .12, by - tubeW * .14, tubeW * .12, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-}
-function renderReadout() {
-  const a = atr(), p = spinePitch();
-  const shown = M.state === 'locked' ? M.lockVal : a;
-  $('#atrVal').innerHTML = `${fmt(Math.abs(shown))}<sup>°</sup>`;
-  $('#atrSide').textContent = Math.abs(shown) < .5 ? 'střed' : shown > 0 ? 'vpravo' : 'vlevo';
-  const pill = $('#statePill'); let t, k = '';
-  if (M.state === 'locked') { const c = cls(M.lockVal); t = 'Zaznamenáno · ' + c.t; k = c.k; }
-  else if (M.state === 'settling') t = ST.autoLock ? 'Držte, ustaluji…' : 'Připraveno';
-  else t = 'Přiložte telefon';
-  pill.className = 'pill ' + k; $('#stateText').textContent = t;
-  const prog = M.state === 'locked' ? 1 : M.stableStart ? clamp((performance.now() - M.stableStart) / ST.stableMs, 0, 1) : 0;
-  $('#lockProg').style.width = (prog * 100) + '%';
-  const pz = poseOf(); const pv = $('#poseVal');
-  if (!pz) { pv.textContent = '–'; pv.className = 'muted'; }
-  else if (ST.cal[pz]) { pv.textContent = POSES[pz] + ' · kalibrováno'; pv.className = 'muted'; }
-  else { pv.innerHTML = `<span class="pill warn"><span class="dot"></span>${POSES[pz]} · nekalibrováno</span>`; pv.className = ''; }
-  if (M.state === 'away') { $('#pitchVal').textContent = '–'; $('#bendHint').textContent = ''; }
-  else { const ap = Math.abs(p); $('#pitchVal').textContent = fmt(ap, 0) + '°'; $('#bendHint').textContent = ap <= 20 ? '· vodorovně, vhodné' : '· upravte předklon'; }
 }
 
 /* ---------- spine scan ---------- */
@@ -774,29 +722,26 @@ function sonicSet(a) {
   if (s.p) s.p.pan.setTargetAtTime(clamp(a / 8, -1, 1), ac.currentTime, .05);
 }
 function sonicStop() { const s = scan.sonic; if (!s) return; try { s.g.gain.setTargetAtTime(0, AC.currentTime, .05); s.o.stop(AC.currentTime + .3); } catch (e) {} scan.sonic = null; }
-// Hands-free start: arm, place the phone on C7 and hold it still; recording starts by itself.
-$('#scanStart').addEventListener('click', () => {
+// Start like a camera: the SKEN button, optionally with a self-timer so the phone can be settled on C7 first.
+function scanBegin() {
   if (scan.running) return;
-  scan.running = true; scan.phase = 'arm'; scan.data = []; scan.moved = false; scan.armBuf = []; if (S.sim) SIM.lift = performance.now() + 450;
-  $('#scanLive').hidden = false; $('#scanStart').hidden = true;
-  $('#scanState').textContent = 'Přiložte u C7 a podržte, nebo klepněte na displej'; $('#scanState').className = 'pill'; beep(660, .08);
-});
-// ...or a touch anywhere on the screen starts it right away
-document.addEventListener('pointerdown', e => { if (scan.running && scan.phase === 'arm' && !e.target.closest('#scanStop')) { e.preventDefault(); startRec(); } }, true);
+  audio(); scan.running = true; scan.data = []; scan.lastSec = 0;
+  const d = +ST.scanDelay || 0;
+  if (d > 0) { scan.phase = 'count'; scan.countEnd = performance.now() + d * 1000; }
+  else startRec();
+}
+function scanCancel() { scan.running = false; scan.phase = ''; toast('Sken zrušen.'); }
+// during the countdown a tap anywhere starts right away
+document.addEventListener('pointerdown', e => { if (scan.running && scan.phase === 'count' && !e.target.closest('#sShutter,#sMenu,.menu')) { e.preventDefault(); startRec(); } }, true);
 function startRec() {
   beep(1046, .15); buzz(60);
   scan.phase = 'rec'; scan.t0 = performance.now(); scan.offT = 0; scan.sonic = sonicStart();
-  $('#scanState').textContent = 'Nahrávám, posouvejte ke kříži'; $('#scanState').className = 'pill ok';
 }
-$('#scanStop').addEventListener('click', () => finishScan(false));
 function scanTick(now, a, p) {
-  if (scan.phase === 'arm') {
-    if (S.gyro > 20) scan.moved = true;
-    const ok = scan.moved && poseOf() && Math.abs(a) < 35 && S.gyro < 4;
-    if (!ok) { scan.armBuf = []; return; }
-    scan.armBuf.push({ t: now, a }); while (now - scan.armBuf[0].t > 800) scan.armBuf.shift();
-    const v = scan.armBuf.map(s => s.a);
-    if (now - scan.armBuf[0].t > 700 && Math.max(...v) - Math.min(...v) < .8) startRec();
+  if (scan.phase === 'count') {
+    const left = Math.ceil((scan.countEnd - now) / 1000);
+    if (left !== scan.lastSec) { scan.lastSec = left; if (left > 0) { beep(660, .07, .1); buzz(25); } }
+    if (now >= scan.countEnd) startRec();
     return;
   }
   if (scan.phase !== 'rec') return;
@@ -806,20 +751,21 @@ function scanTick(now, a, p) {
   else scan.offT = 0;
   if (placed) scan.data.push({ t, a, p });
   sonicSet(a);
-  $('#scanVal').innerHTML = `${fmt(Math.abs(a))}<sup>°</sup>`;
   if (t > 25) finishScan(false);
 }
 function finishScan(auto) {
   if (!scan.running) return;
   clearInterval(scan.countIv); sonicStop(); scan.running = false; scan.phase = '';
-  $('#scanLive').hidden = true; $('#scanStart').hidden = false; $('#scanState').className = 'pill';
   let d = scan.data; if (d.length) { const T = d[d.length - 1].t; d = d.filter(s => s.t > .15 && s.t < T - (auto ? .35 : .05)); }
   if (d.length < 30) { toast('Sken byl příliš krátký. Posouvejte telefon plynule 4–6 sekund.'); drawScan(); return; }
   scan.result = analyzeScan(d); chord(); buzz([40, 60, 40]);
   const r = scan.result; const best = RK.map(k => r.peaks[k]).filter(Boolean).sort((x, y) => Math.abs(y.v) - Math.abs(x.v))[0];
+  M.exam.scan = compactScan(r); saveDraft(); renderResults();
   say(`Sken hotov. ${r.double ? 'Dvojitý oblouk. ' : ''}${best ? `Maximum ${REG[best.k].name.toLowerCase()} ${sayDeg(best.v)} ${sideWord(best.v)}` : ''}`);
   renderScan();
 }
+function compactScan(r) { return { peaks: r.peaks, double: r.double, maxR: r.maxR, maxL: r.maxL, source: r.source, pts: r.pts.filter((_, i) => i % 3 === 0).map(s => [Math.round(s.x * 1000) / 1000, Math.round(s.a * 10) / 10]) }; }
+function expandScan(s) { return Object.assign({}, s, { pts: s.pts.map(p => ({ x: p[0], a: p[1] })) }); }
 function analyzeScan(d) {
   // smooth pitch, check if the back's sagittal inclination is monotonic (convex arch in forward bend)
   const n = d.length; const ps = d.map((s, i) => { let a = 0, c = 0; for (let j = Math.max(0, i - 6); j <= Math.min(n - 1, i + 6); j++) { a += d[j].p; c++; } return a / c; });
@@ -848,14 +794,9 @@ function renderScan() {
   let h = '';
   RK.forEach(k => { const pk = r.peaks[k]; if (!pk) return; const c = cls(pk.v); h += `<div class="peak"><span>${REG[k].name} <span class="muted small">· ${Math.round(pk.x * 100)} % délky</span></span><span><b class="num">${fmt(Math.abs(pk.v))}°</b> ${sideWord(pk.v)} <span class="pill ${c.k}"><span class="dot"></span>${c.t}</span></span></div>`; });
   if (r.double) h += `<p class="small"><b>Dvojitý oblouk:</b> rotace vpravo ${fmt(r.maxR)}° a vlevo ${fmt(Math.abs(r.maxL))}°.</p>`;
-  h += `<p class="small muted">Sken slouží k nalezení vrcholu. Rozhodující hodnotu změřte v místě vrcholu třemi přiloženími na kartě Měření.</p>`;
-  $('#peaks').innerHTML = h; $('#scanAdopt').disabled = false;
+  h += `<p class="small muted">Sken slouží k nalezení vrcholu. Rozhodující hodnotu změřte v místě vrcholu třemi přiloženími na šířku.</p>`;
+  $('#peaks').innerHTML = h;
 }
-$('#scanAdopt').addEventListener('click', () => {
-  if (!scan.result) return; const r = scan.result;
-  M.exam.scan = { peaks: r.peaks, double: r.double, maxR: r.maxR, maxL: r.maxL, source: r.source, pts: r.pts.filter((_, i) => i % 3 === 0).map(s => [Math.round(s.x * 1000) / 1000, Math.round(s.a * 10) / 10]) };
-  renderSummary(); toast('Sken připojen k dnešnímu vyšetření.');
-});
 function drawScan() {
   const c = $('#scanChart'); const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
   const col = { ink: css('--ink'), muted: css('--muted'), line: css('--line'), s2: css('--surface2'), accent: css('--accent'), warn: css('--warn'), bad: css('--bad'), ok: css('--ok') };
@@ -878,150 +819,8 @@ function drawScan() {
   RK.forEach(k => { const pk = r.peaks[k]; if (!pk || Math.abs(pk.v) < 1.5) return; const x = X(pk.x), y = Y(pk.v); ctx.fillStyle = col[cls(pk.v).k]; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = col.ink; ctx.font = `700 11px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.fillText(fmt(Math.abs(pk.v)) + '°', clamp(x, L + 18, w - R - 18), y + (pk.v > 0 ? -12 : 13)); });
 }
 
-/* ---------- posture photo ---------- */
-const CAM = { stream: null, on: false, levelSince: 0, shot: null, ghost: null, tool: 'shoulders', pending: null, img: null };
-const TOOLS = [
-  { k: 'shoulders', n: 'Ramena', d: 'akromion vlevo a vpravo' },
-  { k: 'scapulae', n: 'Lopatky', d: 'dolní úhly lopatek' },
-  { k: 'pelvis', n: 'Pánev', d: 'hřebeny kyčelní kosti' },
-  { k: 'plumb', n: 'Olovnice', d: 'C7, pak intergluteální rýha' },
-  { k: 'custom', n: 'Vlastní', d: 'libovolná úsečka' }];
-function screenUp() {
-  // up vector projected to screen (x right, y up); normalised so the phone is upright
-  const a = screenAngle() / D, [ux, uy, uz] = S.u;
-  let sx = ux * Math.cos(a) - uy * Math.sin(a), sy = ux * Math.sin(a) + uy * Math.cos(a), sz = uz;
-  if (sy < 0) { sx = -sx; sy = -sy; sz = -sz; }
-  const n = Math.hypot(sx, sy) || 1; return { sx: sx / n, sy: sy / n, roll: Math.atan2(sx, sy) * D, tilt: Math.atan2(Math.abs(sz), Math.hypot(sx, sy)) * D };
-}
-$('#camBtn').addEventListener('click', async () => {
-  if (CAM.on) { stopCam(); return; }
-  try {
-    CAM.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1440 }, height: { ideal: 1920 } }, audio: false });
-    const v = $('#video'); v.srcObject = CAM.stream; await v.play(); CAM.on = true; $('#camMsg').hidden = true; $('#camBtn').textContent = 'Vypnout kameru'; $('#shootBtn').disabled = false;
-    loadGhost();
-  } catch (e) { $('#camMsg').textContent = 'Kameru nelze spustit (' + (e.name || 'chyba') + '). Povolte kameru v prohlížeči, nebo fotku nahrajte ze souboru.'; }
-});
-function stopCam() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.on = false; $('#camMsg').hidden = false; $('#camMsg').textContent = 'Kamera je vypnutá.'; $('#camBtn').textContent = 'Zapnout kameru'; $('#shootBtn').disabled = true; }
-async function loadGhost() { CAM.ghost = null; const p = curPatient(); if (!p) return; const list = await IDB.byPatient(p.id).catch(() => []); if (!list.length) return; list.sort((a, b) => b.date.localeCompare(a.date)); const im = new Image(); im.onload = () => CAM.ghost = im; im.src = list[0].img; }
-function coverRect(sw, sh, dw, dh) { const s = Math.max(dw / sw, dh / sh); const w = dw / s, h = dh / s; return [(sw - w) / 2, (sh - h) / 2, w, h]; }
-function drawCam() {
-  const c = $('#camOverlay'); const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
-  if (!CAM.on) return;
-  if (CAM.ghost && $('#ghostOn').checked) { ctx.globalAlpha = .33; ctx.drawImage(CAM.ghost, 0, 0, w, h); ctx.globalAlpha = 1; }
-  const u = screenUp(); const level = Math.abs(u.roll) < .8 && u.tilt < 4;
-  const col = level ? '#52C68F' : '#F0B53F';
-  const ux = u.sx, uy = -u.sy; const hx = u.sy, hy = u.sx; // canvas coords (y down)
-  ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.35)';
-  for (let i = -4; i <= 4; i++) { if (!i) continue; const ox = w / 2 + hx * i * w / 10, oy = h / 2 + hy * i * w / 10; ctx.beginPath(); ctx.moveTo(ox - ux * h, oy - uy * h); ctx.lineTo(ox + ux * h, oy + uy * h); ctx.stroke(); }
-  for (let i = -5; i <= 5; i++) { const ox = w / 2 + ux * i * h / 12, oy = h / 2 + uy * i * h / 12; ctx.beginPath(); ctx.moveTo(ox - hx * w, oy - hy * w); ctx.lineTo(ox + hx * w, oy + hy * w); ctx.stroke(); }
-  ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(w / 2 - ux * h, h / 2 - uy * h); ctx.lineTo(w / 2 + ux * h, h / 2 + uy * h); ctx.stroke();
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(10, 10, 168, 50); ctx.fillStyle = col; ctx.font = `700 14px ${css('--f-num')}`; ctx.textBaseline = 'top';
-  ctx.fillText(`Náklon ${fmt(Math.abs(u.roll))}°`, 18, 16); ctx.fillText(`Sklon  ${fmt(u.tilt)}°`, 18, 36);
-  const now = performance.now();
-  if (level && $('#autoShot').checked) {
-    if (!CAM.levelSince) { CAM.levelSince = now; beep(700, .05, .06); }
-    const pr = (now - CAM.levelSince) / 700; ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(w / 2, h / 2, 26, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(pr, 0, 1)); ctx.stroke();
-    if (pr >= 1) { CAM.levelSince = 0; shoot(); }
-  } else CAM.levelSince = 0;
-}
-function shoot() {
-  if (!CAM.on) return; const v = $('#video'); const box = $('#cam').getBoundingClientRect();
-  const [sx, sy, sw, sh] = coverRect(v.videoWidth, v.videoHeight, box.width, box.height);
-  const W = Math.min(900, Math.round(sw)), H = Math.round(W * sh / sw);
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, W, H);
-  const u = screenUp();
-  chord(); buzz(80); stopCam();
-  openPhoto({ id: uid(), date: new Date().toISOString(), img: cv.toDataURL('image/jpeg', .8), up: [u.sx, u.sy], roll: u.roll, view: $('#photoView').value, marks: {} });
-}
-$('#shootBtn').addEventListener('click', shoot);
-$('#photoFile').addEventListener('change', e => {
-  const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
-  rd.onload = () => { const im = new Image(); im.onload = () => { const W = Math.min(900, im.width), H = Math.round(W * im.height / im.width); const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(im, 0, 0, W, H); openPhoto({ id: uid(), date: new Date().toISOString(), img: cv.toDataURL('image/jpeg', .8), up: [0, 1], roll: 0, view: $('#photoView').value, marks: {}, uploaded: true }); toast('Nahraná fotka: svislice se bere podle okraje snímku.'); }; im.src = rd.result; };
-  rd.readAsDataURL(f); e.target.value = '';
-});
-function openPhoto(ph) {
-  CAM.shot = ph; CAM.pending = null; const im = new Image(); im.onload = () => { CAM.img = im; drawAnnot(); }; im.src = ph.img;
-  $('#photoEdit').hidden = false; renderTools(); renderPhotoResults(); $('#photoEdit').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-function renderTools() {
-  $('#tools').innerHTML = TOOLS.map(t => `<button data-k="${t.k}" aria-pressed="${CAM.tool === t.k}">${t.n}</button>`).join('');
-  const t = TOOLS.find(t => t.k === CAM.tool); $('#toolHint').textContent = `${t.n}: klepněte na ${t.d}.`;
-}
-$('#tools').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CAM.tool = b.dataset.k; CAM.pending = null; renderTools(); drawAnnot(); });
-function markAngle(ph, m) {
-  const [ux, uyU] = ph.up; const upC = [ux, -uyU]; const hC = [uyU, ux];
-  let v = [m.p2[0] - m.p1[0], m.p2[1] - m.p1[1]];
-  const im = CAM.img; if (im) { v = [v[0] * im.width, v[1] * im.height]; }
-  if (m.k === 'plumb') {
-    // vector from gluteal cleft (p2) up to C7 (p1)
-    const w = [-v[0], -v[1]]; const ang = Math.atan2(upC[0] * w[1] - upC[1] * w[0], upC[0] * w[0] + upC[1] * w[1]) * D;
-    return ang; // + = C7 toward image right
-  }
-  if (v[0] * hC[0] + v[1] * hC[1] < 0) v = [-v[0], -v[1]];
-  return Math.atan2(hC[0] * v[1] - hC[1] * v[0], hC[0] * v[0] + hC[1] * v[1]) * D; // + = image-right end lower
-}
-function patSide(imgRight, view) { return (view === 'posterior') === imgRight ? 'pravá' : 'levá'; }
-function markText(ph, k, ang) {
-  const imgRight = ang > 0; const a = fmt(Math.abs(ang));
-  if (k === 'plumb') return Math.abs(ang) < .3 ? 'C7 nad rýhou' : `C7 vychýleno ${patSide(imgRight, ph.view) === 'pravá' ? 'vpravo' : 'vlevo'} o ${a}°`;
-  if (Math.abs(ang) < .3) return 'vodorovně';
-  return `${patSide(imgRight, ph.view)} strana níže o ${a}°`;
-}
-function drawAnnot() {
-  const c = $('#annot'); const im = CAM.img; if (!im) return;
-  const box = c.parentElement.getBoundingClientRect(); const d = window.devicePixelRatio || 1;
-  const w = box.width, h = w * im.height / im.width; c.style.height = h + 'px'; c.width = Math.round(w * d); c.height = Math.round(h * d);
-  const ctx = c.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0); ctx.drawImage(im, 0, 0, w, h);
-  const ph = CAM.shot; const [ux, uyU] = ph.up; const upC = [ux, -uyU];
-  ctx.strokeStyle = 'rgba(82,198,143,.85)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
-  ctx.beginPath(); ctx.moveTo(w / 2 - upC[0] * h, h / 2 - upC[1] * h); ctx.lineTo(w / 2 + upC[0] * h, h / 2 + upC[1] * h); ctx.stroke(); ctx.setLineDash([]);
-  const colors = { shoulders: '#4BC3CB', scapulae: '#B89DEB', pelvis: '#F2A35E', plumb: '#52C68F', custom: '#F26D60' };
-  const pt = p => [p[0] * w, p[1] * h];
-  Object.entries(ph.marks).forEach(([k, m]) => {
-    const [x1, y1] = pt(m.p1), [x2, y2] = pt(m.p2); ctx.strokeStyle = colors[k]; ctx.fillStyle = colors[k]; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    [[x1, y1], [x2, y2]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); });
-    const lbl = fmt(Math.abs(m.angle)) + '°'; ctx.font = `700 13px ${css('--f-num')}`; const tw = ctx.measureText(lbl).width;
-    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 14; ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(mx - tw / 2 - 5, my - 10, tw + 10, 20); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lbl, mx, my);
-  });
-  if (CAM.pending) { const [x, y] = pt(CAM.pending); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke(); }
-}
-$('#annot').addEventListener('pointerdown', e => {
-  if (!CAM.img) return; const r = e.target.getBoundingClientRect(); const p = [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
-  if (!CAM.pending) { CAM.pending = p; beep(800, .04, .06); drawAnnot(); return; }
-  const m = { k: CAM.tool, p1: CAM.pending, p2: p }; m.angle = markAngle(CAM.shot, m); CAM.shot.marks[CAM.tool] = m; CAM.pending = null; beep(1000, .06, .08);
-  const i = TOOLS.findIndex(t => t.k === CAM.tool); if (i < 3) { CAM.tool = TOOLS[i + 1].k; renderTools(); }
-  drawAnnot(); renderPhotoResults();
-});
-function renderPhotoResults() {
-  const ph = CAM.shot; if (!ph) return;
-  const h = TOOLS.filter(t => ph.marks[t.k]).map(t => { const m = ph.marks[t.k]; return `<div class="peak"><span>${t.n}</span><span><b class="num">${fmt(Math.abs(m.angle))}°</b> <span class="small muted">${markText(ph, t.k, m.angle)}</span></span></div>`; }).join('');
-  $('#photoResults').innerHTML = h || '<p class="small muted">Zatím bez označení. Zelená přerušovaná čára je skutečná svislice v okamžiku snímku.</p>';
-}
-$('#savePhoto').addEventListener('click', async () => {
-  if (!curPatient()) { openSheet(); toast('Vyberte pacienta pro uložení fotky.'); return; }
-  const ph = CAM.shot; ph.patientId = DB.current;
-  try { await IDB.put(ph); toast('Fotka uložena.'); $('#photoEdit').hidden = true; CAM.shot = null; renderThumbs(); } catch (e) { toast('Fotku se nepodařilo uložit.'); }
-});
-$('#discardPhoto').addEventListener('click', () => { CAM.shot = null; $('#photoEdit').hidden = true; });
-async function renderThumbs() {
-  const p = curPatient(); const box = $('#thumbs'); box.innerHTML = '';
-  if (!p) { $('#thumbsEmpty').hidden = false; return; }
-  const list = await IDB.byPatient(p.id).catch(() => []); list.sort((a, b) => b.date.localeCompare(a.date));
-  $('#thumbsEmpty').hidden = list.length > 0;
-  list.forEach(ph => { const b = document.createElement('button'); b.title = new Date(ph.date).toLocaleDateString('cs-CZ'); b.innerHTML = `<img alt="Fotka ${b.title}" src="${ph.img}">`; b.addEventListener('click', () => { CAM.tool = 'shoulders'; openPhoto(ph); }); box.appendChild(b); });
-}
-const IDB = {
-  db: null,
-  open() { return this.db || (this.db = new Promise((res, rej) => { try { const r = indexedDB.open('skoliometr-foto', 1); r.onupgradeneeded = () => { const s = r.result.createObjectStore('photos', { keyPath: 'id' }); s.createIndex('patient', 'patientId'); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } })); },
-  async put(p) { const db = await this.open(); return new Promise((res, rej) => { const tx = db.transaction('photos', 'readwrite'); tx.objectStore('photos').put(p); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); },
-  async byPatient(pid) { const db = await this.open(); return new Promise((res, rej) => { const q = db.transaction('photos').objectStore('photos').index('patient').getAll(pid); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); },
-  async delPatient(pid) { const list = await this.byPatient(pid); const db = await this.open(); return new Promise(res => { const tx = db.transaction('photos', 'readwrite'); list.forEach(p => tx.objectStore('photos').delete(p.id)); tx.oncomplete = res; tx.onerror = res; }); },
-  async all() { const db = await this.open(); return new Promise((res, rej) => { const q = db.transaction('photos').objectStore('photos').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); }
-};
-
 /* ---------- patients ---------- */
-function renderHeader() { const p = curPatient(); $('#patientName').textContent = p ? p.code : 'Bez pacienta'; }
+function renderHeader() { const p = curPatient(); $('#patientName').textContent = p ? p.code : 'Bez pacienta'; $('#mPat').textContent = p ? p.code : 'Bez pacienta'; }
 function lastExam(pid) { return DB.exams.filter(e => e.patientId === pid).sort((a, b) => b.date.localeCompare(a.date))[0]; }
 function examMax(ex) { let best = null; RK.forEach(k => { const st = stats(ex.regions[k]); if (st && (!best || Math.abs(st.m) > Math.abs(best))) best = st.m; }); return best; }
 function patientRow(p) {
@@ -1036,7 +835,7 @@ function renderPatients() {
   if (!detailId && DB.current) detailId = DB.current;
   renderDetail();
 }
-$('#plist').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; detailId = b.dataset.id; DB.current = detailId; save(); renderHeader(); renderDetail(); renderThumbs(); });
+$('#plist').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; detailId = b.dataset.id; DB.current = detailId; save(); renderHeader(); renderDetail(); renderResults(); });
 function examsOf(pid) { return DB.exams.filter(e => e.patientId === pid).sort((a, b) => a.date.localeCompare(b.date)); }
 function renderDetail() {
   const p = patient(detailId); $('#pDetail').hidden = !p; if (!p) return;
@@ -1108,7 +907,7 @@ $('#delPatient').addEventListener('click', async e => {
   const p = patient(detailId); if (!p) return;
   if (Date.now() - delArm > 4000) { delArm = Date.now(); e.target.textContent = 'Opravdu smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat pacienta', 4000); return; }
   DB.patients = DB.patients.filter(x => x.id !== p.id); DB.exams = DB.exams.filter(x => x.patientId !== p.id); if (DB.current === p.id) DB.current = null; detailId = null; save();
-  await IDB.delPatient(p.id).catch(() => {}); e.target.textContent = 'Smazat pacienta'; renderHeader(); renderPatients(); toast('Pacient smazán.');
+  e.target.textContent = 'Smazat pacienta'; renderHeader(); renderPatients(); toast('Pacient smazán.');
 });
 
 /* sheet */
@@ -1123,7 +922,7 @@ $('#newPatient2').addEventListener('click', () => { openSheet(); setTimeout(() =
 $('#sheetClose').addEventListener('click', closeSheet);
 $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
 function selectPatient(id) {
-  DB.current = id || null; detailId = DB.current; save(); renderHeader(); renderPatients(); renderThumbs(); if (CAM.on) loadGhost();
+  DB.current = id || null; detailId = DB.current; save(); renderHeader(); renderPatients(); renderResults();
   const ps = pendingSave; $('#sheet').hidden = true; pendingSave = false;
   if (ps && DB.current) doSaveExam();
 }
@@ -1136,21 +935,20 @@ $('#pForm').addEventListener('submit', e => {
 
 /* ---------- settings ---------- */
 function bindSettings() {
-  $('#camSide').value = ST.cameraRight ? 'right' : 'left'; $('#standSide').value = ST.standBehind ? 'behind' : 'front'; $('#railSide').value = ST.railRight ? 'right' : 'left';
+  $('#camSide').value = ST.cameraRight ? 'right' : 'left'; $('#standSide').value = ST.standBehind ? 'behind' : 'front'; $('#scanDelay').value = String(ST.scanDelay);
   ['thrWarn', 'thrRef'].forEach(k => $('#' + k).value = ST[k]);
   $('#smooth').value = ST.smooth; $('#stableMs').value = String(ST.stableMs);
-  ['instr', 'autoLock', 'sound', 'haptic', 'voice', 'voiceCmd'].forEach(k => $('#' + k).checked = !!ST[k]);
+  ['autoLock', 'sound', 'haptic', 'voice', 'voiceCmd'].forEach(k => $('#' + k).checked = !!ST[k]);
   renderCal(); updateDiagram();
 }
 function updateDiagram() { $('#dgCam').setAttribute('cx', ST.cameraRight ? 248 : 112); }
 $('#camSide').addEventListener('change', e => { ST.cameraRight = e.target.value === 'right'; save(); updateDiagram(); });
 $('#standSide').addEventListener('change', e => { ST.standBehind = e.target.value === 'behind'; save(); });
-$('#railSide').addEventListener('change', e => { ST.railRight = e.target.value === 'right'; save(); applyRail(); });
-function applyRail() { document.body.classList.toggle('railRight', !!ST.railRight); }
+$('#scanDelay').addEventListener('change', e => { ST.scanDelay = +e.target.value; save(); });
 ['thrWarn', 'thrRef'].forEach(k => $('#' + k).addEventListener('change', e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (v > 0) { ST[k] = v; if (ST.thrRef < ST.thrWarn) ST.thrRef = ST.thrWarn; save(); bindSettings(); renderSummary(); } }));
 $('#smooth').addEventListener('change', e => { ST.smooth = e.target.value; save(); });
 $('#stableMs').addEventListener('change', e => { ST.stableMs = +e.target.value; save(); });
-['instr', 'autoLock', 'sound', 'haptic', 'voice'].forEach(k => $('#' + k).addEventListener('change', e => { ST[k] = e.target.checked; save(); }));
+['autoLock', 'sound', 'haptic', 'voice'].forEach(k => $('#' + k).addEventListener('change', e => { ST[k] = e.target.checked; save(); }));
 $('#voiceCmd').addEventListener('change', e => { ST.voiceCmd = e.target.checked; save(); ST.voiceCmd ? startVoiceCmd() : stopVoiceCmd(); });
 
 // Reversal calibration, hands-free: capture when still, wait for the 180° turn, capture again.
@@ -1205,18 +1003,17 @@ $('#calBtn').addEventListener('click', () => {
   CAL.step = 1; CAL.buf = []; renderCal(); CAL.iv = setInterval(calLoop, 30);
 });
 $('#calReset').addEventListener('click', () => { ST.offsets = { flat: 0, edgeA: 0, edgeB: 0 }; ST.cal = {}; CAL.step = 0; save(); renderCal(); });
-$('#exportAll').addEventListener('click', async () => { const photos = await IDB.all().catch(() => []); shareFile(`skoliometr-zaloha-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...DB, photos }), 'application/json'); });
+$('#exportAll').addEventListener('click', () => shareFile(`skoliometr-zaloha-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(DB), 'application/json'));
 $('#importAll').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
-  rd.onload = async () => { try { const d = JSON.parse(rd.result); if (!d.patients) throw 0; const photos = d.photos || []; delete d.photos; DB = d; DB.settings = Object.assign({}, DEF, d.settings || {}); Object.assign(ST, DB.settings); DB.settings = ST; save(); for (const p of photos) await IDB.put(p).catch(() => {}); bindSettings(); renderHeader(); renderPatients(); renderThumbs(); toast('Záloha obnovena.'); } catch (err) { toast('Soubor není záloha Skoliometru.'); } };
+  rd.onload = async () => { try { const d = JSON.parse(rd.result); if (!d.patients) throw 0; delete d.photos; DB = d; DB.settings = Object.assign({}, DEF, d.settings || {}); Object.assign(ST, DB.settings); DB.settings = ST; save(); bindSettings(); renderHeader(); renderPatients(); renderResults(); toast('Záloha obnovena.'); } catch (err) { toast('Soubor není záloha Skoliometru.'); } };
   rd.readAsText(f); e.target.value = '';
 });
 let wipeArm = 0;
 $('#wipeAll').addEventListener('click', async e => {
   if (Date.now() - wipeArm > 4000) { wipeArm = Date.now(); e.target.textContent = 'Opravdu vše smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat všechna data', 4000); return; }
   const keep = { ...ST }; DB = { patients: [], exams: [], settings: keep, current: null }; save();
-  try { indexedDB.deleteDatabase('skoliometr-foto'); IDB.db = null; } catch (err) {}
-  e.target.textContent = 'Smazat všechna data'; renderHeader(); renderPatients(); renderThumbs(); toast('Všechna data smazána.');
+  e.target.textContent = 'Smazat všechna data'; startNewExam(); renderHeader(); renderPatients(); toast('Všechna data smazána.');
 });
 
 /* ---------- voice commands ---------- */
@@ -1238,107 +1035,170 @@ function handleCmd(t) {
   else if (/bedr/.test(t)) { setRegion('l'); say('Bederní'); }
   else if (/přechod|torako|thora/.test(t)) { setRegion('tl'); say('Přechod'); }
   else if (/měř|zazname|teď/.test(t)) lockNow();
-  else if (/smaz|znovu/.test(t)) { $('#clearRegion').click(); say('Smazáno'); }
+  else if (/smaz|znovu/.test(t)) { clearRegion(); say('Smazáno'); }
   else if (/ulož/.test(t)) $('#saveExam').click();
   else if (/výsled|shrn|průměr/.test(t)) { const parts = RK.map(k => { const st = stats(M.exam.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean); say(parts.length ? parts.join('. ') : 'Zatím nic změřeno.'); }
 }
 
-/* ---------- navigation & loop ---------- */
+/* ---------- navigation ---------- */
+// 'measure' = home: studio (landscape) or the result card (portrait). Other views open as a full-screen page.
 let view = 'measure';
+const TITLES = { scan: 'Profil skenu', patients: 'Pacienti a vývoj', settings: 'Nastavení a kalibrace' };
 function show(v) {
-  view = v; ['measure', 'scan', 'photo', 'patients', 'settings'].forEach(k => $('#v-' + k).hidden = k !== v);
-  $$('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
-  if (v !== 'photo' && CAM.on) stopCam();
+  closeMenu(); view = v;
+  ['scan', 'patients', 'settings'].forEach(k => $('#v-' + k).hidden = k !== v);
+  $('#page').hidden = v === 'measure'; $('#pageTitle').textContent = TITLES[v] || '';
   if (v === 'patients') renderPatients();
-  if (v === 'photo') renderThumbs();
-  if (v === 'scan') requestAnimationFrame(() => scan.result ? renderScan() : drawScan());
+  if (v === 'scan') { if (!scan.result && M.exam.scan) scan.result = expandScan(M.exam.scan); requestAnimationFrame(() => scan.result ? renderScan() : drawScan()); }
   if (v === 'settings') bindSettings();
+  if (v === 'measure') renderResults();
   $('#main').scrollTop = 0;
 }
-$$('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
-$('#setBtn').addEventListener('click', () => show(view === 'settings' ? 'measure' : 'settings'));
-/* ---------- instrument mode: full-screen Bunnell dial when the phone stands on its edge ---------- */
-const INSTR = { on: false, lastEdge: 0, suppress: false };
-function instrUpdate() {
-  const p = poseOf(), now = performance.now();
-  if (p === 'edgeA' || p === 'edgeB') INSTR.lastEdge = now; else if (now - INSTR.lastEdge > 1500) INSTR.suppress = false;
-  const want = ST.instr && !INSTR.suppress && view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && now - INSTR.lastEdge < 1500 && INSTR.lastEdge > 0;
-  if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; if (want) placeInstrument(); }
+$('#pageBack').addEventListener('click', () => { if (CAL.step) calStop(); show('measure'); });
+
+/* ---------- menu ---------- */
+function openMenu() {
+  const m = $('#menu'); (STU.on ? $('#stage') : document.body).appendChild(m);
+  m.querySelector('[data-a="measure"]').hidden = STU.on; m.querySelector('[data-a="results"]').hidden = !STU.on;
+  m.querySelector('[data-a="auto"]').setAttribute('aria-checked', !!ST.autoLock);
+  m.hidden = false;
+}
+function closeMenu() { $('#menu').hidden = true; }
+$('#menuBtn').addEventListener('click', e => { e.stopPropagation(); $('#menu').hidden ? openMenu() : closeMenu(); });
+$('#sMenu').addEventListener('click', e => { e.stopPropagation(); $('#menu').hidden ? openMenu() : closeMenu(); });
+// a tap outside the open menu only closes it (it must not record a value)
+document.addEventListener('click', e => { if (!$('#menu').hidden && !e.target.closest('#menu,#menuBtn,#sMenu')) { closeMenu(); e.stopPropagation(); e.preventDefault(); } }, true);
+$('#menu').addEventListener('click', e => {
+  const b = e.target.closest('.topt'); if (!b) return; const a = b.dataset.a;
+  if (a === 'auto') { ST.autoLock = !ST.autoLock; save(); b.setAttribute('aria-checked', ST.autoLock); toast(ST.autoLock ? 'Automatický zápis zapnut.' : 'Zápis klepnutím na displej.'); return; }
+  closeMenu();
+  if (a === 'measure') { STU.force = true; STU.hold = false; }
+  else if (a === 'results') { STU.hold = true; STU.force = false; }
+  else if (a === 'patient') openSheet();
+  else if (a === 'clear') { clearRegion(); toast(`Oblast ${REG[M.region].name.toLowerCase()} smazána.`); }
+  else show(a);
+});
+$('#goMeasure').addEventListener('click', () => { STU.force = true; STU.hold = false; });
+
+/* ---------- studio: landscape measuring screen ---------- */
+// Shown when the screen is landscape or the phone stands on its edge; turning the phone upright (portrait) shows results.
+// The stage follows gravity in 90° steps, so it also works with the screen orientation locked.
+const STU = { on: false, force: false, hold: false, trig: false, upT: 0, th: null, key: '' };
+function studioUpdate() {
+  const now = performance.now(), p = poseOf(), land = innerWidth > innerHeight;
+  const [x, y, z] = S.u, n = Math.hypot(x, y, z) || 1;
+  const upright = !land && Math.abs(y) / n > .8;
+  STU.upT = upright ? (STU.upT || now) : 0;
+  if (STU.upT && now - STU.upT > 500 && !scan.running) STU.force = false;
+  const trig = land || p === 'edgeA' || p === 'edgeB';
+  if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
+  const want = view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && !STU.hold && (trig || STU.force || scan.running);
+  if (want !== STU.on) {
+    STU.on = want; $('#studio').hidden = !want; closeMenu();
+    if (want) { M.state = 'away'; renderRegs(); } else renderResults();
+  }
   return want;
 }
-$('#instrument').addEventListener('click', e => { if (e.target.id === 'instrClose') { INSTR.suppress = true; return; } if (e.target.id === 'instrScan') { armScan(); return; } lockNow(); });
-function armScan() { show('scan'); if (!scan.running) $('#scanStart').click(); }
-// keep the navigation visible beside the instrument: bottom bar (portrait) or side rail (landscape)
-function placeInstrument() {
-  const r = $('.tabs').getBoundingClientRect(), st = document.documentElement.style, W = innerWidth, H = innerHeight;
-  const rail = r.height > r.width;
-  st.setProperty('--navH', rail ? '0px' : (H - r.top) + 'px');
-  st.setProperty('--railL', rail && r.left < W / 2 ? r.right + 'px' : '0px');
-  st.setProperty('--railR', rail && r.left >= W / 2 ? (W - r.left) + 'px' : '0px');
-}
-window.addEventListener('resize', () => { if (INSTR.on) placeInstrument(); });
-function drawInstr() {
-  const c = $('#instrCanvas'); const { ctx, w, h } = fitCanvas(c); 
-  const col = { bg: css('--surface'), ink: css('--ink'), muted: css('--muted'), tube: css('--tube'), edge: css('--tube-edge'), ok: css('--ok'), warn: css('--warn'), bad: css('--bad'), accent: css('--accent'), line: css('--line') };
-  ctx.fillStyle = col.bg; ctx.fillRect(0, 0, w, h);
-  // world "up" on the screen (canvas coords, y down), snapped to 90° so the dial stays fixed to the phone like the real instrument
-  const a = screenAngle() / D, [ux, uy] = S.u;
+$('#studio').addEventListener('click', e => {
+  if (e.target.closest('button,.menu')) return;
+  if (scan.running) return;
+  lockNow();
+});
+$('#sUndo').addEventListener('click', undoLast);
+$('#sShutter').addEventListener('click', () => {
+  if (!scan.running) scanBegin();
+  else if (scan.phase === 'count') scanCancel();
+  else finishScan(false);
+});
+$('#sTimer').addEventListener('click', () => {
+  const opts = [0, 2, 3, 5]; ST.scanDelay = opts[(opts.indexOf(+ST.scanDelay) + 1) % opts.length]; save();
+  beep(800, .04, .05); toast(ST.scanDelay ? `Samospoušť ${ST.scanDelay} s` : 'Samospoušť vypnuta, sken začne hned');
+});
+function layoutStage() {
+  const a = screenAngle() / D, [ux, uy, uz] = S.u, n = Math.hypot(ux, uy, uz) || 1;
   const sx = ux * Math.cos(a) - uy * Math.sin(a), sy = ux * Math.sin(a) + uy * Math.cos(a);
-  const th = Math.round(Math.atan2(sx, sy) / (Math.PI / 2)) * (Math.PI / 2);
-  const swap = Math.abs(Math.sin(th)) > .5; const W = swap ? h : w, H = swap ? w : h;
-  ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(th);
-  // which device end lies at the dial's +X: compare with device +y in canvas coords
+  if (Math.hypot(sx, sy) / n > .5) { const raw = Math.atan2(sx, sy), q = Math.PI / 2, cand = Math.round(raw / q) * q; if (STU.th == null || Math.abs(raw - cand) < 35 / D) STU.th = cand; }
+  if (STU.th == null) STU.th = 0;
+  const th = STU.th, swap = Math.abs(Math.sin(th)) > .5, W = swap ? innerHeight : innerWidth, H = swap ? innerWidth : innerHeight;
+  const key = `${W}x${H}r${th.toFixed(2)}`;
+  if (key !== STU.key) { STU.key = key; const s = $('#stage').style; s.width = W + 'px'; s.height = H + 'px'; s.transform = `translate(-50%,-50%) rotate(${th}rad)`; }
+  return { th, W, H, a };
+}
+function drawStudio() {
+  const { th, W: w, H: h, a } = layoutStage();
+  const c = $('#sCanvas'), dpr = window.devicePixelRatio || 1;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const col = { bg: '#0d1017', ink: '#ffffff', muted: 'rgba(255,255,255,.62)', faint: 'rgba(255,255,255,.14)', ok: '#3dff6e', warn: '#ffd23d', bad: '#ff5a4e', gold: '#f5c95c' };
+  ctx.fillStyle = col.bg; ctx.fillRect(0, 0, w, h);
+  ctx.save(); ctx.translate(w / 2, h / 2);
+  // which device end lies at the dial's +X: compare with device +y in screen coords
   const dyC = [-Math.sin(a), -Math.cos(a)], bx = [Math.cos(th), Math.sin(th)];
   const pz = poseOf(); const sgn = (pz === 'edgeA' || pz === 'edgeB') ? rightEnd(pz) : ((dyC[0] * bx[0] + dyC[1] * bx[1]) >= 0 ? 1 : -1);
-  // dial geometry: shallow arc, concave up, like the scoliometer face
-  const chord = W * .86, span = Math.min(22 / D, 2 * Math.atan(2 * H * .16 / chord)), K = span / (32 / D), Rt = chord / 2 / Math.sin(span), sag = Rt * (1 - Math.cos(span));
-  const tubeW = clamp(H * .075, 16, 34), y0 = -H * .08, cy = y0 - Rt;
+  // dial: shallow arc, concave up, like the Bunnell scoliometer face
+  const W = w, H = h - 150; const cyOff = -10;
+  const chord = W * .84, span = Math.min(22 / D, 2 * Math.atan(2 * H * .2 / chord)), K = span / (32 / D), Rt = chord / 2 / Math.sin(span);
+  const tubeW = clamp(H * .085, 16, 32), y0 = cyOff - H * .02, cy = y0 - Rt;
   const P = (phi, r = Rt) => [r * Math.sin(phi * K), cy + r * Math.cos(phi * K)];
   ctx.lineCap = 'round';
-  ctx.strokeStyle = col.edge; ctx.lineWidth = tubeW + 3; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.04, Math.PI / 2 - span * 1.04, true); ctx.stroke();
-  ctx.strokeStyle = col.tube; ctx.lineWidth = tubeW; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.04, Math.PI / 2 - span * 1.04, true); ctx.stroke();
-  // scale above the tube, numbers 30..0..30
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = tubeW + 3; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.04, Math.PI / 2 - span * 1.04, true); ctx.stroke();
+  ctx.strokeStyle = '#1a2030'; ctx.lineWidth = tubeW; ctx.beginPath(); ctx.arc(0, cy, Rt, Math.PI / 2 + span * 1.04, Math.PI / 2 - span * 1.04, true); ctx.stroke();
   const r0 = Rt - tubeW / 2 - 4; ctx.lineCap = 'butt';
-  const zone = (f, t, c) => [1, -1].forEach(sg => { ctx.strokeStyle = c; ctx.lineWidth = 4; ctx.beginPath(); const A = Math.PI / 2 - sg * f / D * K, B = Math.PI / 2 - sg * t / D * K; ctx.arc(0, cy, r0, Math.min(A, B), Math.max(A, B)); ctx.stroke(); });
+  const zone = (f, t, cc) => [1, -1].forEach(sg => { ctx.strokeStyle = cc; ctx.lineWidth = 4; ctx.beginPath(); const A = Math.PI / 2 - sg * f / D * K, B = Math.PI / 2 - sg * t / D * K; ctx.arc(0, cy, r0, Math.min(A, B), Math.max(A, B)); ctx.stroke(); });
   zone(0, ST.thrWarn, col.ok); zone(ST.thrWarn, ST.thrRef, col.warn); zone(ST.thrRef, 31, col.bad);
   for (let d = -30; d <= 30; d++) {
-    const major = d % 5 === 0, [x1, y1] = P(d / D, r0 - 4), [x2, y2] = P(d / D, r0 - (major ? 18 : 10));
+    const major = d % 5 === 0, [x1, y1] = P(d / D, r0 - 4), [x2, y2] = P(d / D, r0 - (major ? 16 : 9));
     ctx.strokeStyle = major ? col.ink : col.muted; ctx.lineWidth = major ? 2 : 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    if (major) { const [lx, ly] = P(d / D, r0 - 34); ctx.fillStyle = d === 0 ? col.accent : col.ink; ctx.font = `700 ${clamp(H * .055, 13, 22)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(Math.abs(d)), lx, ly); }
+    if (major) { const [lx, ly] = P(d / D, r0 - 30); ctx.fillStyle = d === 0 ? col.gold : col.ink; ctx.font = `600 ${clamp(H * .06, 12, 20)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(Math.abs(d)), lx, ly); }
   }
-  // patient side letters at the ends, notch for the spinous processes at the bottom centre
   const plusLbl = sgn * sideFactor(pz) > 0 ? 'P' : 'L', minusLbl = plusLbl === 'P' ? 'L' : 'P';
-  ctx.fillStyle = col.ink; ctx.font = `800 ${clamp(H * .08, 18, 32)}px ${css('--f-ui')}`; ctx.textBaseline = 'middle';
-  const [ex, ey] = P(29 / D, Rt + tubeW * 1.7); ctx.textAlign = 'center'; ctx.fillText(plusLbl, ex, ey); ctx.fillText(minusLbl, -ex, ey);
-  ctx.fillStyle = col.accent; ctx.beginPath(); ctx.moveTo(-18, H / 2); ctx.lineTo(0, H / 2 - 16); ctx.lineTo(18, H / 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = col.gold; ctx.font = `700 ${clamp(H * .09, 18, 30)}px ${css('--f-ui')}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  const [ex, ey] = P(29 / D, Rt + tubeW * 1.6); ctx.fillText(plusLbl, ex, ey); ctx.fillText(minusLbl, -ex, ey);
   // ball rolls to the physically lower end
   const dv = devAngle(); const phi = clamp(-dv * sgn, -32, 32) / D; const [bx2, by2] = P(phi);
-  const v = M.state === 'locked' ? M.lockVal : atr(); const c2 = cls(v);
-  if (M.state === 'locked') { const [lx, ly] = P(clamp(-(M.lockVal * sideFactor(pz)) * sgn, -32, 32) / D); ctx.strokeStyle = col.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .65, 0, Math.PI * 2); ctx.stroke(); }
-  ctx.fillStyle = M.state === 'away' ? col.muted : col[c2.k]; ctx.beginPath(); ctx.arc(bx2, by2, tubeW * .42, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(bx2 - tubeW * .12, by2 - tubeW * .13, tubeW * .12, 0, Math.PI * 2); ctx.fill();
-  // readout under the dial
-  const ry = y0 + tubeW + clamp(H * .12, 30, 70);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = M.state === 'locked' ? col[c2.k] : col.ink;
-  ctx.font = `800 ${clamp(H * .2, 40, 110)}px ${css('--f-num')}`;
-  const side = Math.abs(v) < .5 ? '' : v > 0 ? ' P' : ' L';
-  ctx.fillText(`${fmt(Math.abs(v))}°${side}`, 0, ry);
-  const prog = M.state === 'locked' ? 1 : M.stableStart ? clamp((performance.now() - M.stableStart) / ST.stableMs, 0, 1) : 0;
-  const pw = W * .3, py = ry + clamp(H * .11, 26, 56); ctx.fillStyle = col.line; ctx.fillRect(-pw / 2, py, pw, 5); ctx.fillStyle = col.accent; ctx.fillRect(-pw / 2, py, pw * prog, 5);
-  const arr = M.exam.regions[M.region]; const st = stats(arr);
-  ctx.font = `600 ${clamp(H * .045, 12, 18)}px ${css('--f-ui')}`; ctx.fillStyle = col.muted;
-  const trials = [0, 1, 2].map(i => arr[i] != null ? fmt(Math.abs(arr[i])) + '°' : '–').join('   ');
-  ctx.fillText(`${REG[M.region].name} · ${trials}${st && st.n > 1 ? `   ⌀ ${fmt(Math.abs(st.m))}°` : ''}`, 0, py + 24);
+  const rec = scan.running && scan.phase === 'rec';
+  const v = M.state === 'locked' && !scan.running ? M.lockVal : atr(); const c2 = cls(v);
+  if (M.state === 'locked' && !scan.running) { const [lx, ly] = P(clamp(-(M.lockVal * sideFactor(pz)) * sgn, -32, 32) / D); ctx.strokeStyle = col.gold; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .66, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.fillStyle = M.state === 'away' && !rec ? 'rgba(255,255,255,.5)' : col[c2.k]; ctx.beginPath(); ctx.arc(bx2, by2, tubeW * .42, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(bx2 - tubeW * .12, by2 - tubeW * .13, tubeW * .12, 0, Math.PI * 2); ctx.fill();
+  // big value
+  const ry = y0 + tubeW + clamp(H * .16, 34, 80);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = M.state === 'locked' || rec ? col[c2.k] : col.ink;
+  ctx.font = `600 ${clamp(H * .22, 40, 104)}px ${css('--f-num')}`;
+  ctx.fillText(`${fmt(Math.abs(v))}°${Math.abs(v) < .5 ? '' : v > 0 ? ' P' : ' L'}`, 0, ry);
+  const sub = ry + clamp(H * .14, 30, 64);
+  ctx.font = `500 ${clamp(H * .05, 12, 16)}px ${css('--f-num')}`;
+  if (rec) {
+    // live profile while scanning
+    const d = scan.data, t = (performance.now() - scan.t0) / 1000, pw = W * .46, ph = 30, base = sub + 30;
+    ctx.textAlign = 'center'; ctx.fillStyle = col.muted; ctx.fillText(`Nahrávám ${fmt(t)} s · posouvejte ke kříži`, 8, sub);
+    ctx.fillStyle = col.bad; ctx.beginPath(); ctx.arc(-ctx.measureText(`Nahrávám ${fmt(t)} s · posouvejte ke kříži`).width / 2 - 6, sub, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = col.faint; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-pw / 2, base); ctx.lineTo(pw / 2, base); ctx.stroke();
+    if (d.length > 1) { const T = Math.max(5, d[d.length - 1].t); ctx.strokeStyle = col.gold; ctx.lineWidth = 2; ctx.beginPath(); d.forEach((s, i) => { const X = -pw / 2 + s.t / T * pw, Y = base - clamp(s.a, -15, 15) / 15 * ph / 2; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke(); }
+  } else {
+    const st0 = M.stableStart ? clamp((performance.now() - M.stableStart) / ST.stableMs, 0, 1) : 0, prog = M.state === 'locked' ? 1 : st0;
+    const pw = W * .12; ctx.fillStyle = col.faint; ctx.fillRect(-pw / 2, sub - 6, pw, 3); ctx.fillStyle = M.state === 'locked' ? col.gold : col.ok; ctx.fillRect(-pw / 2, sub - 6, pw * prog, 3);
+    const arr = M.exam.regions[M.region]; const st = stats(arr);
+    ctx.fillStyle = col.muted; ctx.textAlign = 'center';
+    const trials = [0, 1, 2].map(i => arr[i] != null ? `${fmt(Math.abs(arr[i]))}°${sideShort(arr[i])}` : '–').join('   ');
+    ctx.fillText(`${REG[M.region].name}   ${trials}${st && st.n > 1 ? `   ⌀ ${fmt(Math.abs(st.m))}°${sideShort(st.m)}` : ''}`, 0, sub + 18);
+  }
   ctx.restore();
+  // controls state
+  const sh = $('#sShutter'), cnt = scan.running && scan.phase === 'count';
+  sh.className = 'shutter' + (rec ? ' rec' : cnt ? ' count' : '');
+  sh.textContent = ''; if (cnt) sh.textContent = Math.max(1, Math.ceil((scan.countEnd - performance.now()) / 1000)); else sh.innerHTML = '<i></i>';
+  $('#sShutTxt').textContent = rec ? 'STOP' : cnt ? 'ZRUŠIT' : 'SKEN';
+  const ce = $('#sCount'); ce.hidden = !cnt; if (cnt) ce.textContent = Math.max(1, Math.ceil((scan.countEnd - performance.now()) / 1000));
+  $('#sTimerTxt').textContent = ST.scanDelay ? ST.scanDelay + ' s' : 'vyp'; $('#sTimer').setAttribute('aria-pressed', !!ST.scanDelay);
+  $('#sHint').textContent = cnt ? 'Usaďte telefon u C7. Klepnutím začnete hned.' : rec ? 'Zvednutím telefonu sken skončí' : ST.autoLock ? 'Hodnota se zapíše sama po ustálení, nebo klepněte' : 'Klepnutím kamkoli zapíšete hodnotu';
 }
 
 function loop() {
-  if (instrUpdate()) { drawInstr(); requestAnimationFrame(loop); return; }
-  if (view === 'measure') { renderReadout(); drawGauge(); }
-  else if (view === 'photo') drawCam();
+  if (studioUpdate()) drawStudio();
   requestAnimationFrame(loop);
 }
-window.addEventListener('resize', () => { if (view === 'patients') renderDetail(); if (view === 'scan') drawScan(); if (CAM.shot) drawAnnot(); });
+window.addEventListener('resize', () => { if (view === 'patients') renderDetail(); if (view === 'scan') drawScan(); if (view === 'measure' && M.exam.scan) drawMiniScan(M.exam.scan); });
 
 let wake = null;
 async function keepAwake() { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
@@ -1354,7 +1214,7 @@ $('#startBtn').addEventListener('click', async () => {
   setTimeout(() => { if (!S.has) { startSim(); if (S.denied) toast('Bez povolení pohybu nelze měřit. Povolte ho v nastavení Safari.'); } }, 1500);
 });
 
-applyRail(); renderHeader(); setRegion('th'); renderSummary(); bindSettings();
+renderHeader(); setRegion('th'); renderResults(); bindSettings();
 requestAnimationFrame(loop);
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude|anthropic/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.__skolio = { S, M, ST, scan, analyzeScan, atr, spinePitch, show, DB: () => DB };
