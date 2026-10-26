@@ -341,6 +341,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </svg>
         <label class="field"><span class="label">Fotoaparát (horní hrana telefonu) míří k pacientově</span>
           <select id="camSide"><option value="right">pravé straně</option><option value="left">levé straně</option></select></label>
+        <label class="field"><span class="label">Při měření na hraně (displej k sobě) stojím</span>
+          <select id="standSide"><option value="behind">za pacientem (vidím jeho záda)</option><option value="front">před pacientem (u jeho hlavy)</option></select></label>
+        <p class="small muted">Na hraně se strana určuje podle toho, kde stojíte, a na tom, kterou hranou telefon přiložíte, nezáleží. Kontrola: zvedněte pravý konec telefonu z pohledu pacienta, aplikace musí ukázat P.</p>
         <p class="small muted">Telefon leží displejem nahoru, nebo stojí na dlouhé hraně displejem k vám, vždy dlouhou stranou napříč a středem na trnech. Aplikace polohu pozná sama a použije její kalibraci. Zvolenou orientaci dodržujte u všech pacientů, jinak se prohodí strana.</p>
       </div>
       <div class="card">
@@ -396,7 +399,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <ol class="steps small">
       <li>Pacient se předkloní, paže volně visí, dlaně u sebe.</li>
-      <li>Přiložte telefon napříč zády, střed na trny, fotoaparát k pravé straně pacienta. Může ležet displejem nahoru, nebo stát na dlouhé hraně jako Bunnellův skoliometr.</li>
+      <li>Postavte telefon napříč zády na dlouhou hranu, displejem k sobě, středem na trny, jako Bunnellův skoliometr. Výchozí nastavení počítá s tím, že stojíte za pacientem (změníte v Nastavení).</li>
       <li>Držte lehce. Po ustálení se hodnota sama zamkne, pípne a přečte. Zvedněte a přiložte znovu, celkem třikrát.</li>
     </ol>
     <p class="small muted">Při prvním použití proveďte kalibraci nuly v Nastavení (20 s na stole).</p>
@@ -439,7 +442,7 @@ const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platfor
 
 /* ---------- data ---------- */
 const LS_KEY = 'skoliometr.v1';
-const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, instr: true, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: true, stableMs: 1200, calibrated: false, calInfo: '' };
+const DEF = { offset: 0, platformSign: isIOS ? -1 : 1, cameraRight: true, standBehind: true, instr: true, smooth: 'std', thrWarn: 5, thrRef: 7, sound: true, haptic: true, voice: true, voiceCmd: false, autoLock: true, stableMs: 1200, calibrated: false, calInfo: '' };
 let DB = { patients: [], exams: [], settings: {}, current: null };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.patients) DB = s; } catch (e) {}
 DB.settings = Object.assign({}, DEF, DB.settings || {});
@@ -515,7 +518,17 @@ function poseOf(u = S.u) { const [x, , z] = u; const n = Math.hypot(...u) || 1; 
 // independent of leaning the phone toward or away from the examiner, and of spine inclination.
 function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; const e = Math.atan2(y, Math.hypot(x, z)) * D; return pose === 'flat' ? e * Math.sign(z || 1) : e; }
 function devAngle() { const p = poseOf() || 'flat'; return rawAngle(S.u, p) - (ST.offsets[p] || 0); }          // + = camera end higher
-function atr() { return devAngle() * (ST.cameraRight ? 1 : -1); } // + = right side higher (right hump)
+// Device-y sign of the end on the viewer's right when the phone stands on an edge with the screen
+// facing the examiner (left edge down -> top end points left). Independent of the platform's sign convention.
+function rightEnd(pose = poseOf()) { return pose === 'edgeA' ? -1 : 1; }
+// Multiplier from device angle (+ = top/camera end higher) to patient side (+ = patient's right higher).
+// On an edge: the examiner's right is the patient's right when standing behind, the left when in front.
+// Lying flat: decided by where the camera end points (setting).
+function sideFactor(pose = poseOf()) {
+  if (pose === 'edgeA' || pose === 'edgeB') return rightEnd(pose) * (ST.standBehind ? 1 : -1);
+  return ST.cameraRight ? 1 : -1;
+}
+function atr() { return devAngle() * sideFactor(); } // + = right side higher (right hump)
 function spinePitch() { const [x, y, z] = S.u; const p = poseOf(); if (p === 'edgeA' || p === 'edgeB') return Math.atan2(z * Math.sign(x), Math.hypot(x, y)) * D; return Math.atan2(x * Math.sign(z || 1), Math.hypot(y, z)) * D; }
 function screenAngle() { const o = screen.orientation; return (o && typeof o.angle === 'number') ? o.angle : (typeof window.orientation === 'number' ? window.orientation : 0); }
 
@@ -681,11 +694,11 @@ function drawGauge() {
   // spinous-process notch marker
   const [nx, ny] = P(0, Rt - tubeW / 2 - 3); ctx.fillStyle = col.accent; ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(nx - 6, ny - 9); ctx.lineTo(nx + 6, ny - 9); ctx.closePath(); ctx.fill();
   // end labels (patient side)
-  const plusSide = ST.cameraRight ? 'P' : 'L', minusSide = ST.cameraRight ? 'L' : 'P';
+  const sf = sideFactor(); const plusSide = sf > 0 ? 'P' : 'L', minusSide = sf > 0 ? 'L' : 'P';
   [[1, plusSide], [-1, minusSide]].forEach(([sg, t]) => { const ph = sg * 33 / D * K, [ex, ey] = P(sg * 33 / D), dd = tubeW * 1.35; const lx = ex + sg * Math.cos(ph) * dd, ly = ey - sg * Math.sin(ph) * dd; ctx.save(); ctx.translate(lx, ly); ctx.rotate(-rot); ctx.scale(flip, 1); ctx.font = `800 ${clamp(T * .13, 13, 20)}px ${css('--f-ui')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = col.ink; ctx.fillText(t, 0, 0); ctx.restore(); });
   // locked marker
   if (M.state === 'locked' && M.lockVal != null) {
-    const dv = M.lockVal * (ST.cameraRight ? 1 : -1); const [lx, ly] = P(clamp(-dv, -31, 31) / D);
+    const dv = M.lockVal * sf; const [lx, ly] = P(clamp(-dv, -31, 31) / D);
     ctx.strokeStyle = col.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .62, 0, Math.PI * 2); ctx.stroke();
   }
   // ball: rolls to the physically lower end
@@ -1083,7 +1096,7 @@ $('#pForm').addEventListener('submit', e => {
 
 /* ---------- settings ---------- */
 function bindSettings() {
-  $('#camSide').value = ST.cameraRight ? 'right' : 'left';
+  $('#camSide').value = ST.cameraRight ? 'right' : 'left'; $('#standSide').value = ST.standBehind ? 'behind' : 'front';
   ['thrWarn', 'thrRef'].forEach(k => $('#' + k).value = ST[k]);
   $('#smooth').value = ST.smooth; $('#stableMs').value = String(ST.stableMs);
   ['instr', 'autoLock', 'sound', 'haptic', 'voice', 'voiceCmd'].forEach(k => $('#' + k).checked = !!ST[k]);
@@ -1091,6 +1104,7 @@ function bindSettings() {
 }
 function updateDiagram() { $('#dgCam').setAttribute('cx', ST.cameraRight ? 248 : 112); }
 $('#camSide').addEventListener('change', e => { ST.cameraRight = e.target.value === 'right'; save(); updateDiagram(); });
+$('#standSide').addEventListener('change', e => { ST.standBehind = e.target.value === 'behind'; save(); });
 ['thrWarn', 'thrRef'].forEach(k => $('#' + k).addEventListener('change', e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (v > 0) { ST[k] = v; if (ST.thrRef < ST.thrWarn) ST.thrRef = ST.thrWarn; save(); bindSettings(); renderSummary(); } }));
 $('#smooth').addEventListener('change', e => { ST.smooth = e.target.value; save(); });
 $('#stableMs').addEventListener('change', e => { ST.stableMs = +e.target.value; save(); });
@@ -1223,7 +1237,7 @@ function drawInstr() {
   ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(th);
   // which device end lies at the dial's +X: compare with device +y in canvas coords
   const dyC = [-Math.sin(a), -Math.cos(a)], bx = [Math.cos(th), Math.sin(th)];
-  const sgn = (dyC[0] * bx[0] + dyC[1] * bx[1]) >= 0 ? 1 : -1;
+  const pz = poseOf(); const sgn = (pz === 'edgeA' || pz === 'edgeB') ? rightEnd(pz) : ((dyC[0] * bx[0] + dyC[1] * bx[1]) >= 0 ? 1 : -1);
   // dial geometry: shallow arc, concave up, like the scoliometer face
   const span = 22 / D, K = span / (32 / D), chord = W * .86, Rt = chord / 2 / Math.sin(span), sag = Rt * (1 - Math.cos(span));
   const tubeW = clamp(H * .075, 16, 34), y0 = -H * .12, cy = y0 - Rt;
@@ -1241,14 +1255,14 @@ function drawInstr() {
     if (major) { const [lx, ly] = P(d / D, r0 - 34); ctx.fillStyle = d === 0 ? col.accent : col.ink; ctx.font = `700 ${clamp(H * .055, 13, 22)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(Math.abs(d)), lx, ly); }
   }
   // patient side letters at the ends, notch for the spinous processes at the bottom centre
-  const plusLbl = (sgn > 0) === ST.cameraRight ? 'P' : 'L', minusLbl = plusLbl === 'P' ? 'L' : 'P';
+  const plusLbl = sgn * sideFactor(pz) > 0 ? 'P' : 'L', minusLbl = plusLbl === 'P' ? 'L' : 'P';
   ctx.fillStyle = col.ink; ctx.font = `800 ${clamp(H * .08, 18, 32)}px ${css('--f-ui')}`; ctx.textBaseline = 'middle';
   const [ex, ey] = P(29 / D, Rt + tubeW * 1.7); ctx.textAlign = 'center'; ctx.fillText(plusLbl, ex, ey); ctx.fillText(minusLbl, -ex, ey);
   ctx.fillStyle = col.accent; ctx.beginPath(); ctx.moveTo(-18, H / 2); ctx.lineTo(0, H / 2 - 16); ctx.lineTo(18, H / 2); ctx.closePath(); ctx.fill();
   // ball rolls to the physically lower end
   const dv = devAngle(); const phi = clamp(-dv * sgn, -32, 32) / D; const [bx2, by2] = P(phi);
   const v = M.state === 'locked' ? M.lockVal : atr(); const c2 = cls(v);
-  if (M.state === 'locked') { const [lx, ly] = P(clamp(-(M.lockVal * (ST.cameraRight ? 1 : -1)) * sgn, -32, 32) / D); ctx.strokeStyle = col.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .65, 0, Math.PI * 2); ctx.stroke(); }
+  if (M.state === 'locked') { const [lx, ly] = P(clamp(-(M.lockVal * sideFactor(pz)) * sgn, -32, 32) / D); ctx.strokeStyle = col.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(lx, ly, tubeW * .65, 0, Math.PI * 2); ctx.stroke(); }
   ctx.fillStyle = M.state === 'away' ? col.muted : col[c2.k]; ctx.beginPath(); ctx.arc(bx2, by2, tubeW * .42, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(bx2 - tubeW * .12, by2 - tubeW * .13, tubeW * .12, 0, Math.PI * 2); ctx.fill();
   // readout under the dial
