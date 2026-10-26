@@ -178,6 +178,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
 #instrument{position:fixed;inset:0;z-index:30;background:var(--surface);touch-action:none}
 #instrument canvas{position:absolute;inset:0;width:100%;height:100%}
+#instrClose{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));min-height:36px;padding:6px 12px;font-size:.85rem;opacity:.85}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
 .diagram{width:100%;max-width:360px;height:auto;display:block}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
@@ -424,7 +425,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
-<div id="instrument" hidden aria-label="Režim přístroje, klepnutím zaznamenáte hodnotu"><canvas id="instrCanvas"></canvas></div>
+<div id="instrument" hidden aria-label="Režim přístroje, klepnutím zaznamenáte hodnotu"><canvas id="instrCanvas"></canvas><button class="btn" id="instrClose">Zavřít stupnici</button></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -492,7 +493,7 @@ function css(v) { return getComputedStyle(document.documentElement).getPropertyV
 
 /* ---------- sensors ---------- */
 // u = filtered "up" (reaction to gravity) in device axes: x right, y toward top edge (camera), z out of screen.
-const S = { u: [0, 0, 9.81], raw: [0, 0, 9.81], gyro: 0, has: false, sim: false, last: 0, prevAtr: 0 };
+const S = { pose: 'flat', u: [0, 0, 9.81], raw: [0, 0, 9.81], gyro: 0, has: false, sim: false, last: 0, prevAtr: 0 };
 const TAU = { fast: .07, std: .16, calm: .32 };
 function onMotion(e) {
   const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
@@ -501,6 +502,7 @@ function onMotion(e) {
   const tau = scan.running ? TAU.fast : TAU[ST.smooth] || TAU.std;
   const k = 1 - Math.exp(-dt / tau);
   for (let i = 0; i < 3; i++) S.u[i] += (S.raw[i] - S.u[i]) * k;
+  S.pose = classifyPose(S.u, S.pose);
   const r = e.rotationRate;
   if (r && (r.alpha != null || r.beta != null)) S.gyro = Math.hypot(r.alpha || 0, r.beta || 0, r.gamma || 0);
   else { const at = rawAngle(); S.gyro = Math.abs(at - S.prevAtr) / dt; S.prevAtr = at; }
@@ -513,7 +515,15 @@ function onMotion(e) {
 // Each pose has its own zero, because buttons and case edges make the long edges asymmetric.
 // edgeA = up vector along +x (left edge down, phone held upright facing you), edgeB = right edge down.
 const POSES = { flat: 'na plocho', edgeA: 'na levé hraně', edgeB: 'na pravé hraně' };
-function poseOf(u = S.u) { const [x, , z] = u; const n = Math.hypot(...u) || 1; if (Math.abs(z) / n > .6) return 'flat'; if (Math.abs(x) / n > .6) return x > 0 ? 'edgeA' : 'edgeB'; return null; }
+function classifyPose(u, last) {
+  const [x, , z] = u; const n = Math.hypot(...u) || 1, rz = Math.abs(z) / n, rx = Math.abs(x) / n;
+  const edge = x > 0 ? 'edgeA' : 'edgeB';
+  // strong hysteresis: a steep spine (lumbar part of a scan, up to ~70°) must not flip flat <-> edge
+  if (last === 'flat') return rx > .9 ? edge : rz > .3 ? 'flat' : null;
+  if (last) return rz > .9 ? 'flat' : (rx > .3 && edge === last) || rx > .6 ? edge : null;
+  if (rz > .6 && rz >= rx) return 'flat'; if (rx > .6) return edge; return null;
+}
+function poseOf(u = S.u) { return u === S.u ? S.pose : classifyPose(u, null); }
 // Tilt of the phone's long axis (device y) from horizontal. Using the full |x,z| plane makes it
 // independent of leaning the phone toward or away from the examiner, and of spine inclination.
 function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; const e = Math.atan2(y, Math.hypot(x, z)) * D; return pose === 'flat' ? e * Math.sign(z || 1) : e; }
@@ -1216,15 +1226,15 @@ function show(v) {
 $$('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
 $('#setBtn').addEventListener('click', () => show(view === 'settings' ? 'measure' : 'settings'));
 /* ---------- instrument mode: full-screen Bunnell dial when the phone stands on its edge ---------- */
-const INSTR = { on: false, lastEdge: 0 };
+const INSTR = { on: false, lastEdge: 0, suppress: false };
 function instrUpdate() {
   const p = poseOf(), now = performance.now();
-  if (p === 'edgeA' || p === 'edgeB') INSTR.lastEdge = now;
-  const want = ST.instr && view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && now - INSTR.lastEdge < 1500 && INSTR.lastEdge > 0;
+  if (p === 'edgeA' || p === 'edgeB') INSTR.lastEdge = now; else if (now - INSTR.lastEdge > 1500) INSTR.suppress = false;
+  const want = ST.instr && !INSTR.suppress && view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && now - INSTR.lastEdge < 1500 && INSTR.lastEdge > 0;
   if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; }
   return want;
 }
-$('#instrument').addEventListener('click', lockNow);
+$('#instrument').addEventListener('click', e => { if (e.target.id === 'instrClose') { INSTR.suppress = true; return; } lockNow(); });
 function drawInstr() {
   const c = $('#instrCanvas'); const { ctx, w, h } = fitCanvas(c); 
   const col = { bg: css('--surface'), ink: css('--ink'), muted: css('--muted'), tube: css('--tube'), edge: css('--tube-edge'), ok: css('--ok'), warn: css('--warn'), bad: css('--bad'), accent: css('--accent'), line: css('--line') };
