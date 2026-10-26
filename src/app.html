@@ -232,8 +232,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <section id="v-scan" class="view" aria-label="Sken páteře" hidden>
       <div class="card">
         <h2>Sken páteře jedním tahem</h2>
-        <p class="small muted">Pacient v Adamsově předklonu. Přiložte telefon napříč zády u C7 a plynule ho posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
-        <button class="btn primary big" id="scanStart">Spustit sken</button>
+        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Připravit sken, přiložte telefon napříč zády u C7 a chvíli ho podržte. Po pípnutí začne nahrávání a vy ho plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
+        <button class="btn primary big" id="scanStart">Připravit sken</button>
         <div class="scanLive" id="scanLive" hidden>
           <div class="bignum" id="scanVal" style="font-size:3.4rem">0,0<sup>°</sup></div>
           <div class="grid" style="display:grid;gap:6px">
@@ -739,20 +739,29 @@ function sonicSet(a) {
   if (s.p) s.p.pan.setTargetAtTime(clamp(a / 8, -1, 1), ac.currentTime, .05);
 }
 function sonicStop() { const s = scan.sonic; if (!s) return; try { s.g.gain.setTargetAtTime(0, AC.currentTime, .05); s.o.stop(AC.currentTime + .3); } catch (e) {} scan.sonic = null; }
+// Hands-free start: arm, place the phone on C7 and hold it still; recording starts by itself.
 $('#scanStart').addEventListener('click', () => {
   if (scan.running) return;
-  scan.running = true; scan.phase = 'count'; scan.data = []; $('#scanLive').hidden = false; $('#scanStart').hidden = true;
-  let n = 3; $('#scanState').textContent = 'Přiložte u C7… ' + n; beep(660, .08);
-  const iv = setInterval(() => {
-    n--; if (n > 0) { $('#scanState').textContent = 'Přiložte u C7… ' + n; beep(660, .08); return; }
-    clearInterval(iv); beep(1046, .15); buzz(60);
-    scan.phase = 'rec'; scan.t0 = performance.now(); scan.offT = 0; scan.sonic = sonicStart();
-    $('#scanState').textContent = 'Posouvejte ke kříži'; $('#scanState').className = 'pill ok';
-  }, 800);
-  scan.countIv = iv;
+  scan.running = true; scan.phase = 'arm'; scan.data = []; scan.moved = false; scan.armBuf = []; if (S.sim) SIM.lift = performance.now() + 450;
+  $('#scanLive').hidden = false; $('#scanStart').hidden = true;
+  $('#scanState').textContent = 'Přiložte u C7 a podržte'; $('#scanState').className = 'pill'; beep(660, .08);
 });
+function startRec() {
+  beep(1046, .15); buzz(60);
+  scan.phase = 'rec'; scan.t0 = performance.now(); scan.offT = 0; scan.sonic = sonicStart();
+  $('#scanState').textContent = 'Nahrávám, posouvejte ke kříži'; $('#scanState').className = 'pill ok';
+}
 $('#scanStop').addEventListener('click', () => finishScan(false));
 function scanTick(now, a, p) {
+  if (scan.phase === 'arm') {
+    if (S.gyro > 20) scan.moved = true;
+    const ok = scan.moved && poseOf() && Math.abs(a) < 35 && S.gyro < 4;
+    if (!ok) { scan.armBuf = []; return; }
+    scan.armBuf.push({ t: now, a }); while (now - scan.armBuf[0].t > 800) scan.armBuf.shift();
+    const v = scan.armBuf.map(s => s.a);
+    if (now - scan.armBuf[0].t > 700 && Math.max(...v) - Math.min(...v) < .8) startRec();
+    return;
+  }
   if (scan.phase !== 'rec') return;
   const t = (now - scan.t0) / 1000;
   const placed = Math.abs(a) < 35 && Math.abs(p) < 80 && S.gyro < 160;
