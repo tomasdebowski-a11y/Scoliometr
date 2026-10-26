@@ -214,6 +214,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
             <div class="prog" aria-hidden="true"><i id="lockProg"></i></div>
           </div>
           <div>
+            <div class="row small" style="justify-content:space-between"><span class="muted">Poloha telefonu</span><span id="poseVal" class="muted">–</span></div>
             <div class="row small" style="justify-content:space-between"><span class="muted">Sklon zad v místě</span><span><b class="num" id="pitchVal">–</b> <span id="bendHint" class="muted"></span></span></div>
           </div>
           <div>
@@ -321,9 +322,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <section id="v-settings" class="view" aria-label="Nastavení" hidden>
       <div class="card">
         <h2>Kalibrace nuly</h2>
-        <p class="small muted">Metoda obrácení: změří se dvě polohy na stejném místě, otočené o 180°. Výsledek odečte chybu senzoru i náklon stolu, takže stůl nemusí být vodorovný.</p>
+        <p class="small muted">Metoda obrácení: změří se dvě polohy na stejném místě, otočené o 180°. Výsledek odečte chybu senzoru, nerovnost krytu i tlačítek a náklon stolu, takže stůl nemusí být vodorovný. Každou polohu, ve které budete měřit (na plocho, na levé hraně, na pravé hraně), kalibrujte zvlášť. Začněte polohou na plocho.</p>
         <p id="calText"></p>
-        <div class="row"><button class="btn primary" id="calBtn">Začít kalibraci</button><button class="btn ghost" id="calReset">Zrušit kalibraci</button></div>
+        <div class="row"><button class="btn primary" id="calBtn">Začít kalibraci</button><button class="btn ghost" id="calReset">Zrušit všechny kalibrace</button></div>
       </div>
       <div class="card">
         <h2>Jak držet telefon</h2>
@@ -337,7 +338,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </svg>
         <label class="field"><span class="label">Fotoaparát (horní hrana telefonu) míří k pacientově</span>
           <select id="camSide"><option value="right">pravé straně</option><option value="left">levé straně</option></select></label>
-        <p class="small muted">Telefon leží displejem nahoru, dlouhou stranou napříč, střed telefonu na trnech. Zvolenou orientaci dodržujte u všech pacientů, jinak se prohodí strana.</p>
+        <p class="small muted">Telefon leží displejem nahoru, nebo stojí na dlouhé hraně displejem k vám, vždy dlouhou stranou napříč a středem na trnech. Aplikace polohu pozná sama a použije její kalibraci. Zvolenou orientaci dodržujte u všech pacientů, jinak se prohodí strana.</p>
       </div>
       <div class="card">
         <h2>Měření</h2>
@@ -391,7 +392,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <ol class="steps small">
       <li>Pacient se předkloní, paže volně visí, dlaně u sebe.</li>
-      <li>Položte telefon displejem nahoru napříč zády, střed na trny, fotoaparát k pravé straně pacienta.</li>
+      <li>Přiložte telefon napříč zády, střed na trny, fotoaparát k pravé straně pacienta. Může ležet displejem nahoru, nebo stát na dlouhé hraně jako Bunnellův skoliometr.</li>
       <li>Držte lehce. Po ustálení se hodnota sama zamkne, pípne a přečte. Zvedněte a přiložte znovu, celkem třikrát.</li>
     </ol>
     <p class="small muted">Při prvním použití proveďte kalibraci nuly v Nastavení (20 s na stole).</p>
@@ -438,6 +439,8 @@ let DB = { patients: [], exams: [], settings: {}, current: null };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.patients) DB = s; } catch (e) {}
 DB.settings = Object.assign({}, DEF, DB.settings || {});
 const ST = DB.settings;
+if (!ST.offsets) ST.offsets = { flat: ST.offset || 0 };
+if (!ST.cal) ST.cal = ST.calibrated ? { flat: ST.calInfo || 'kalibrováno' } : {};
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); } catch (e) { toast('Data se nepodařilo uložit, úložiště prohlížeče je nedostupné.'); } }
 const patient = id => DB.patients.find(p => p.id === id);
 const curPatient = () => patient(DB.current);
@@ -498,10 +501,15 @@ function onMotion(e) {
 }
 // Bunnell geometry: ball in a curved tube in the device y–z plane settles at atan2(gy, gz).
 // Using |z| makes the reading independent of the platform's sign convention.
-function rawAngle(u = S.u) { const [, y, z] = u; return Math.atan2(y * Math.sign(z || 1), Math.abs(z)) * D; }
-function devAngle() { return rawAngle() - ST.offset; }          // + = camera end higher
+// Pose: lying flat on the back, or standing on a long edge (like the Bunnell instrument).
+// Each pose has its own zero, because buttons and case edges make the long edges asymmetric.
+// edgeA = up vector along +x (left edge down, phone held upright facing you), edgeB = right edge down.
+const POSES = { flat: 'na plocho', edgeA: 'na levé hraně', edgeB: 'na pravé hraně' };
+function poseOf(u = S.u) { const [x, , z] = u; const n = Math.hypot(...u) || 1; if (Math.abs(z) / n > .6) return 'flat'; if (Math.abs(x) / n > .6) return x > 0 ? 'edgeA' : 'edgeB'; return null; }
+function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; if (pose === 'edgeA' || pose === 'edgeB') return Math.atan2(y, Math.abs(x)) * D; return Math.atan2(y * Math.sign(z || 1), Math.abs(z)) * D; }
+function devAngle() { const p = poseOf() || 'flat'; return rawAngle(S.u, p) - (ST.offsets[p] || 0); }          // + = camera end higher
 function atr() { return devAngle() * (ST.cameraRight ? 1 : -1); } // + = right side higher (right hump)
-function spinePitch() { const [x, y, z] = S.u; return Math.atan2(x * Math.sign(z || 1), Math.hypot(y, z)) * D; }
+function spinePitch() { const [x, y, z] = S.u; const p = poseOf(); if (p === 'edgeA' || p === 'edgeB') return Math.atan2(z * Math.sign(x), Math.hypot(x, y)) * D; return Math.atan2(x * Math.sign(z || 1), Math.hypot(y, z)) * D; }
 function screenAngle() { const o = screen.orientation; return (o && typeof o.angle === 'number') ? o.angle : (typeof window.orientation === 'number' ? window.orientation : 0); }
 
 /* ---------- simulation (for preview without sensors) ---------- */
@@ -522,7 +530,7 @@ function simStep() {
     if (tt >= 1.08) { ang = 50; gyro = 200; }
   } else if (SIM.lift > now) { ang = 40 * Math.sin((SIM.lift - now) / 120); gyro = 140; pitch = 30; }
   else { SIM.cur += (SIM.target - SIM.cur) * .05; ang = SIM.cur + gauss() * .18 + .15 * Math.sin(now / 900); pitch = 9 + Math.sin(now / 1500); }
-  const dev = ang * (ST.cameraRight ? 1 : -1) + ST.offset;
+  const dev = ang * (ST.cameraRight ? 1 : -1) + (ST.offsets.flat || 0);
   const g = 9.81, s = ST.platformSign, pr = pitch / D, ar = dev / D;
   const z = g * Math.cos(pr) * Math.cos(ar), y = g * Math.cos(pr) * Math.sin(ar), x = g * Math.sin(pr);
   onMotion({ sim: true, accelerationIncludingGravity: { x: x * s, y: y * s, z: z * s }, rotationRate: { alpha: gyro * .5, beta: gyro * .6, gamma: gyro * .3 } });
@@ -534,7 +542,7 @@ $('#simPlace').addEventListener('click', () => { SIM.lift = performance.now() + 
 const M = { region: 'th', state: 'away', buf: [], stableStart: 0, lockVal: null, ticks: 0, exam: null };
 function newExam() { return { id: uid(), date: new Date().toISOString(), regions: { th: [], tl: [], l: [] }, scan: null, note: '' }; }
 M.exam = newExam();
-function onBack(a, p) { const [x, y, z] = S.u; const n = Math.hypot(x, y, z) || 1; return Math.abs(a) < 35 && Math.abs(p) < 65 && Math.abs(z) / n > .4; }
+function onBack(a, p) { const [x, y, z] = S.u; const n = Math.hypot(x, y, z) || 1; return Math.abs(a) < 35 && Math.abs(p) < 65 && !!poseOf(); }
 
 function tick(now) {
   const a = atr(), p = spinePitch();
@@ -692,6 +700,10 @@ function renderReadout() {
   pill.className = 'pill ' + k; $('#stateText').textContent = t;
   const prog = M.state === 'locked' ? 1 : M.stableStart ? clamp((performance.now() - M.stableStart) / ST.stableMs, 0, 1) : 0;
   $('#lockProg').style.width = (prog * 100) + '%';
+  const pz = poseOf(); const pv = $('#poseVal');
+  if (!pz) { pv.textContent = '–'; pv.className = 'muted'; }
+  else if (ST.cal[pz]) { pv.textContent = POSES[pz] + ' · kalibrováno'; pv.className = 'muted'; }
+  else { pv.innerHTML = `<span class="pill warn"><span class="dot"></span>${POSES[pz]} · nekalibrováno</span>`; pv.className = ''; }
   if (M.state === 'away') { $('#pitchVal').textContent = '–'; $('#bendHint').textContent = ''; }
   else { const ap = Math.abs(p); $('#pitchVal').textContent = fmt(ap, 0) + '°'; $('#bendHint').textContent = ap <= 20 ? '· vodorovně, vhodné' : '· upravte předklon'; }
 }
@@ -1078,17 +1090,21 @@ $('#stableMs').addEventListener('change', e => { ST.stableMs = +e.target.value; 
 ['autoLock', 'sound', 'haptic', 'voice'].forEach(k => $('#' + k).addEventListener('change', e => { ST[k] = e.target.checked; save(); }));
 $('#voiceCmd').addEventListener('change', e => { ST.voiceCmd = e.target.checked; save(); ST.voiceCmd ? startVoiceCmd() : stopVoiceCmd(); });
 
-const CAL = { step: 0, a1: 0 };
+const CAL = { step: 0, a1: 0, pose: null };
 function renderCal() {
   const t = $('#calText'), b = $('#calBtn');
-  if (CAL.step === 0) { t.innerHTML = ST.calibrated ? `<span class="pill ok"><span class="dot"></span>Kalibrováno</span> <span class="small">${esc(ST.calInfo)}</span>` : '<span class="pill warn"><span class="dot"></span>Nekalibrováno</span>'; b.textContent = 'Začít kalibraci'; b.disabled = false; }
-  if (CAL.step === 1) { t.innerHTML = '<b>Krok 1/2.</b> Položte telefon displejem nahoru na pevný stůl, fotoaparátem k sobě. Nesahejte na něj a klepněte Měřit.'; b.textContent = 'Měřit polohu 1'; }
-  if (CAL.step === 2) { t.innerHTML = '<b>Krok 2/2.</b> Otočte telefon o 180° na stejném místě (fotoaparát od sebe), pusťte ho a klepněte Měřit.'; b.textContent = 'Měřit polohu 2'; }
+  if (CAL.step === 0) {
+    t.innerHTML = Object.keys(POSES).map(k => `<div class="peak"><span>${POSES[k][0].toUpperCase() + POSES[k].slice(1)}</span>${ST.cal[k] ? `<span class="small"><span class="pill ok"><span class="dot"></span>kalibrováno</span> ${esc(ST.cal[k])}</span>` : '<span class="pill warn"><span class="dot"></span>nekalibrováno</span>'}</div>`).join('');
+    b.textContent = 'Kalibrovat polohu'; b.disabled = false;
+  }
+  if (CAL.step === 1) { t.innerHTML = '<b>Krok 1/2.</b> Položte telefon na pevný stůl tak, jak budete měřit: displejem nahoru, nebo postavený na dlouhé hraně (opřený, aby nespadl). Nesahejte na něj a klepněte Měřit.'; b.textContent = 'Měřit polohu 1'; }
+  if (CAL.step === 2) { t.innerHTML = `<b>Krok 2/2.</b> Telefon ${POSES[CAL.pose]}. Otočte ho o 180° na stejném místě tak, aby dole zůstala stejná strana (${CAL.pose === 'flat' ? 'displej dál nahoře' : 'stejná hrana na stole, displej teď od vás'}). Pusťte ho a klepněte Měřit.`; b.textContent = 'Měřit polohu 2'; }
 }
 function sampleStable(ms = 1600) {
   return new Promise((res, rej) => {
-    const vals = [], zs = []; let bad = 0; const t0 = performance.now();
-    const iv = setInterval(() => { vals.push(rawAngle()); zs.push(S.u[2]); if (S.gyro > 8) bad++; if (performance.now() - t0 > ms) { clearInterval(iv); const st = stats(vals); if (bad > 5 || st.sd > .25) rej(new Error('pohyb')); else res({ a: st.m, z: zs.reduce((x, y) => x + y, 0) / zs.length }); } }, 20);
+    const vals = [], zs = []; let bad = 0; const t0 = performance.now(); const pose = poseOf();
+    if (!pose) { rej(new Error('poloha')); return; }
+    const iv = setInterval(() => { if (poseOf() !== pose) bad += 10; vals.push(rawAngle(S.u, pose)); zs.push(S.u[2]); if (S.gyro > 8) bad++; if (performance.now() - t0 > ms) { clearInterval(iv); const st = stats(vals); if (bad > 5 || st.sd > .25) rej(new Error('pohyb')); else res({ a: st.m, z: zs.reduce((x, y) => x + y, 0) / zs.length, pose }); } }, 20);
   });
 }
 $('#calBtn').addEventListener('click', async () => {
@@ -1098,17 +1114,24 @@ $('#calBtn').addEventListener('click', async () => {
   try {
     const r = await sampleStable();
     if (CAL.step === 1) {
-      if (r.z < 0) { ST.platformSign *= -1; for (let i = 0; i < 3; i++) S.u[i] *= -1; }
-      CAL.a1 = r.a; CAL.step = 2; beep(880, .08); buzz(40);
+      if (r.pose === 'flat' && r.z < 0) {
+        // platform reports gravity with the opposite sign: fix it, and the edge zeros flip with it
+        ST.platformSign *= -1; for (let i = 0; i < 3; i++) S.u[i] *= -1;
+        ['edgeA', 'edgeB'].forEach(k => { if (ST.offsets[k]) ST.offsets[k] *= -1; });
+        r.a = rawAngle(S.u, 'flat');
+      }
+      CAL.a1 = r.a; CAL.pose = r.pose; CAL.step = 2; beep(880, .08); buzz(40);
     } else {
-      ST.offset = (CAL.a1 + r.a) / 2; const tilt = (CAL.a1 - r.a) / 2; ST.calibrated = true;
-      ST.calInfo = `Chyba senzoru ${fmt(ST.offset)}°, náklon stolu ${fmt(Math.abs(tilt))}° (${new Date().toLocaleDateString('cs-CZ')}).`;
-      save(); CAL.step = 0; chord(); buzz([40, 60, 40]); say('Kalibrace hotová.');
+      if (r.pose !== CAL.pose) { toast(`Telefon musí zůstat ${POSES[CAL.pose]}. Otočte ho jen kolem svislé osy.`); b.disabled = false; renderCal(); return; }
+      const off = (CAL.a1 + r.a) / 2, tilt = (CAL.a1 - r.a) / 2;
+      ST.offsets[CAL.pose] = off;
+      ST.cal[CAL.pose] = `nula ${fmt(off)}°, stůl ${fmt(Math.abs(tilt))}° (${new Date().toLocaleDateString('cs-CZ')})`;
+      save(); chord(); buzz([40, 60, 40]); say(`Kalibrace ${POSES[CAL.pose]} hotová.`); CAL.step = 0;
     }
-  } catch (e) { toast('Telefon se během měření pohnul. Nechte ho ležet a zkuste to znovu.'); }
+  } catch (e) { toast(e.message === 'poloha' ? 'Telefon musí ležet displejem nahoru, nebo stát na dlouhé hraně.' : 'Telefon se během měření pohnul. Nechte ho ležet a zkuste to znovu.'); }
   b.disabled = false; renderCal();
 });
-$('#calReset').addEventListener('click', () => { ST.offset = 0; ST.calibrated = false; ST.calInfo = ''; CAL.step = 0; save(); renderCal(); });
+$('#calReset').addEventListener('click', () => { ST.offsets = { flat: 0, edgeA: 0, edgeB: 0 }; ST.cal = {}; CAL.step = 0; save(); renderCal(); });
 $('#exportAll').addEventListener('click', async () => { const photos = await IDB.all().catch(() => []); shareFile(`skoliometr-zaloha-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ ...DB, photos }), 'application/json'); });
 $('#importAll').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
