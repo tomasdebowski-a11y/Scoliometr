@@ -232,7 +232,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <section id="v-scan" class="view" aria-label="Sken páteře" hidden>
       <div class="card">
         <h2>Sken páteře jedním tahem</h2>
-        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Připravit sken, přiložte telefon napříč zády u C7 a chvíli ho podržte. Po pípnutí začne nahrávání a vy ho plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
+        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Připravit sken a přiložte telefon napříč zády u C7. Nahrávání začne samo, když telefon chvíli podržíte v klidu, nebo hned po dotyku displeje. Po pípnutí telefon plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
         <button class="btn primary big" id="scanStart">Připravit sken</button>
         <div class="scanLive" id="scanLive" hidden>
           <div class="bignum" id="scanVal" style="font-size:3.4rem">0,0<sup>°</sup></div>
@@ -744,8 +744,10 @@ $('#scanStart').addEventListener('click', () => {
   if (scan.running) return;
   scan.running = true; scan.phase = 'arm'; scan.data = []; scan.moved = false; scan.armBuf = []; if (S.sim) SIM.lift = performance.now() + 450;
   $('#scanLive').hidden = false; $('#scanStart').hidden = true;
-  $('#scanState').textContent = 'Přiložte u C7 a podržte'; $('#scanState').className = 'pill'; beep(660, .08);
+  $('#scanState').textContent = 'Přiložte u C7 a podržte, nebo klepněte na displej'; $('#scanState').className = 'pill'; beep(660, .08);
 });
+// ...or a touch anywhere on the screen starts it right away
+document.addEventListener('pointerdown', e => { if (scan.running && scan.phase === 'arm' && !e.target.closest('#scanStop')) { e.preventDefault(); startRec(); } }, true);
 function startRec() {
   beep(1046, .15); buzz(60);
   scan.phase = 'rec'; scan.t0 = performance.now(); scan.offT = 0; scan.sonic = sonicStart();
