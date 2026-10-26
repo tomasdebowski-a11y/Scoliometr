@@ -66,7 +66,7 @@ p{margin:0}
 .iconbtn svg{width:24px;height:24px}
 
 #simBanner{background:var(--warn-bg);color:var(--ink);font-size:.85rem;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
-main{overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch}
+main{grid-row:3;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch}
 .view{max-width:1000px;margin:0 auto;padding-block:14px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px;align-content:start}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -88,7 +88,7 @@ main{overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:t
 .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 
 /* Tabs */
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs{grid-row:4;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .tabs button{border:0;background:transparent;padding:8px 2px 9px;display:grid;justify-items:center;gap:2px;font-size:.72rem;font-weight:600;color:var(--muted);cursor:pointer}
 .tabs button svg{width:24px;height:24px}
 .tabs button[aria-selected="true"]{color:var(--accent)}
@@ -176,8 +176,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .startHero{display:grid;gap:6px}
 .startHero h1{font-size:2rem;font-weight:800;font-stretch:72%;letter-spacing:.005em;line-height:1}
 .steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
-#instrument{position:fixed;inset:0;z-index:30;background:var(--surface);touch-action:none}
+#instrument{position:fixed;top:0;left:0;right:0;bottom:var(--navH,64px);z-index:30;background:var(--surface);touch-action:none}
 #instrument canvas{position:absolute;inset:0;width:100%;height:100%}
+#instrScan{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));min-height:44px;padding:8px 16px}
 #instrClose{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));min-height:36px;padding:6px 12px;font-size:.85rem;opacity:.85}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;z-index:60;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
 .diagram{width:100%;max-width:360px;height:auto;display:block}
@@ -227,6 +228,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <div class="row">
             <button class="btn" id="lockNow">Zaznamenat teď</button>
             <button class="btn ghost" id="clearRegion">Smazat oblast</button>
+            <button class="btn primary" id="measScan">Skenovat páteř</button>
           </div>
           <div class="simctl" id="simCtl" hidden>
             <span class="label">Simulace pacienta</span>
@@ -248,8 +250,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <section id="v-scan" class="view" aria-label="Sken páteře" hidden>
       <div class="card">
         <h2>Sken páteře jedním tahem</h2>
-        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Připravit sken a přiložte telefon napříč zády u C7. Nahrávání začne samo, když telefon chvíli podržíte v klidu, nebo hned po dotyku displeje. Po pípnutí telefon plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
-        <button class="btn primary big" id="scanStart">Připravit sken</button>
+        <p class="small muted">Pacient v Adamsově předklonu. Klepněte na Skenovat páteř a přiložte telefon napříč zády u C7. Nahrávání začne samo, když telefon chvíli podržíte v klidu, nebo hned po dotyku displeje. Po pípnutí telefon plynule posuňte po trnech až ke kříži (asi 4–6 s). Aplikace zaznamená celý profil rotace a sama najde vrcholy oblouků. Tón se zvyšuje s rotací a ozývá se z té strany, kde je hrb, takže se můžete dívat na pacienta.</p>
+        <button class="btn primary big" id="scanStart">Skenovat páteř</button>
         <div class="scanLive" id="scanLive" hidden>
           <div class="bignum" id="scanVal" style="font-size:3.4rem">0,0<sup>°</sup></div>
           <div class="grid" style="display:grid;gap:6px">
@@ -425,7 +427,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
-<div id="instrument" hidden aria-label="Režim přístroje, klepnutím zaznamenáte hodnotu"><canvas id="instrCanvas"></canvas><button class="btn" id="instrClose">Zavřít stupnici</button></div>
+<div id="instrument" hidden aria-label="Režim přístroje, klepnutím zaznamenáte hodnotu"><canvas id="instrCanvas"></canvas><button class="btn" id="instrClose">Zavřít stupnici</button><button class="btn primary" id="instrScan">Skenovat páteř</button></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -619,6 +621,7 @@ function lockNow() {
   record(vals.reduce((x, y) => x + y, 0) / vals.length);
 }
 $('#lockNow').addEventListener('click', lockNow);
+$('#measScan').addEventListener('click', () => armScan());
 $('#gaugeWrap').addEventListener('click', lockNow);
 $('#clearRegion').addEventListener('click', () => { M.exam.regions[M.region] = []; M.state = 'away'; renderTrials(); renderSummary(); });
 function setRegion(r) {
@@ -1242,10 +1245,11 @@ function instrUpdate() {
   const p = poseOf(), now = performance.now();
   if (p === 'edgeA' || p === 'edgeB') INSTR.lastEdge = now; else if (now - INSTR.lastEdge > 1500) INSTR.suppress = false;
   const want = ST.instr && !INSTR.suppress && view === 'measure' && $('#sheet').hidden && $('#startOverlay').hidden && now - INSTR.lastEdge < 1500 && INSTR.lastEdge > 0;
-  if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; }
+  if (want !== INSTR.on) { INSTR.on = want; $('#instrument').hidden = !want; if (want) document.documentElement.style.setProperty('--navH', ($('.tabs').getBoundingClientRect().height + parseFloat(getComputedStyle(document.documentElement).paddingBottom || 0)) + 'px'); }
   return want;
 }
-$('#instrument').addEventListener('click', e => { if (e.target.id === 'instrClose') { INSTR.suppress = true; return; } lockNow(); });
+$('#instrument').addEventListener('click', e => { if (e.target.id === 'instrClose') { INSTR.suppress = true; return; } if (e.target.id === 'instrScan') { armScan(); return; } lockNow(); });
+function armScan() { show('scan'); if (!scan.running) $('#scanStart').click(); }
 function drawInstr() {
   const c = $('#instrCanvas'); const { ctx, w, h } = fitCanvas(c); 
   const col = { bg: css('--surface'), ink: css('--ink'), muted: css('--muted'), tube: css('--tube'), edge: css('--tube-edge'), ok: css('--ok'), warn: css('--warn'), bad: css('--bad'), accent: css('--accent'), line: css('--line') };
@@ -1315,12 +1319,12 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 $('#startBtn').addEventListener('click', async () => {
   audio(); beep(660, .05, .05);
-  try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') toast('Bez povolení pohybu nelze měřit. Povolte ho v nastavení Safari.'); } } catch (e) {}
+  try { if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') { const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') S.denied = true; } } catch (e) {}
   window.addEventListener('devicemotion', onMotion);
   try { if ('speechSynthesis' in window) speechSynthesis.getVoices(); } catch (e) {}
   keepAwake(); $('#startOverlay').hidden = true;
   if (ST.voiceCmd) startVoiceCmd();
-  setTimeout(() => { if (!S.has) startSim(); }, 1500);
+  setTimeout(() => { if (!S.has) { startSim(); if (S.denied) toast('Bez povolení pohybu nelze měřit. Povolte ho v nastavení Safari.'); } }, 1500);
 });
 
 renderHeader(); setRegion('th'); renderSummary(); bindSettings();
