@@ -105,6 +105,9 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .f input,.f select{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;width:100%;min-height:46px}
 .resfoot{flex:none;display:grid;gap:8px;padding:10px max(14px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--surface)}
 .resfoot>*{max-width:680px;width:100%;margin:0 auto}
+.sstate{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;font-size:.85rem;font-weight:600;color:var(--muted);min-height:22px;padding:0;cursor:pointer}
+.sstate.ok{color:var(--ok)} .sstate.warn{color:var(--warn)}
+.brk{flex-basis:100%;height:0}
 .rfrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .chartBox{position:relative;width:100%;aspect-ratio:16/9}
 .chartBox canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -242,8 +245,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
   </main>
   <footer class="resfoot">
-    <button class="btn primary big" id="saveExam">Uložit vyšetření</button>
-    <div class="rfrow"><button class="btn" id="copyLine"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Do karty</button><button class="btn" id="newExamBtn"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nové vyšetření</button></div>
+    <button class="sstate" id="saveState" type="button"></button>
+    <button class="btn primary big" id="saveExam">Ukončit vyšetření</button>
+    <div class="rfrow"><button class="btn" id="copyLine"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Do karty</button><button class="btn" id="newExamBtn"><svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Složka pacienta</button></div>
   </footer>
 </div>
 
@@ -625,7 +629,24 @@ function undoLast() {
 }
 function clearRegion() { M.exam.regions[M.region] = []; M.hist = M.hist.filter(k => k !== M.region); M.state = 'away'; saveDraft(); renderResults(); renderRegs(); }
 function setRegion(r) { M.region = r; renderRegs(); }
-function saveDraft() { DB.draft = M.exam; save(); }
+function hasData(ex) { return RK.some(k => ex.regions[k].length) || !!ex.scan; }
+// Autosave: as soon as the open exam has a value it lives in the selected patient's folder and is kept up to date.
+function saveDraft() {
+  const ex = M.exam, i = DB.exams.findIndex(e => e.id === ex.id);
+  if (!ex.patientId && DB.current && hasData(ex)) ex.patientId = DB.current;
+  if (ex.patientId && hasData(ex)) { if (i < 0) { ex.date = new Date().toISOString(); DB.exams.push(ex); } else DB.exams[i] = ex; }
+  else if (i >= 0) DB.exams.splice(i, 1);
+  DB.draft = ex; save(); renderSaveState();
+}
+function renderSaveState() {
+  renderHeader();
+  const ex = M.exam, el = $('#saveState'), b = $('#saveExam'), has = hasData(ex), p = patient(ex.patientId);
+  if (!has) { el.className = 'sstate'; el.textContent = 'Zatím nic změřeno, ukládá se samo'; b.textContent = 'Ukončit vyšetření'; b.disabled = true; return; }
+  b.disabled = false;
+  if (p) { el.className = 'sstate ok'; el.textContent = `✓ Uloženo ve složce ${p.code}`; b.textContent = 'Ukončit vyšetření'; }
+  else { el.className = 'sstate warn'; el.textContent = 'Vyberte pacienta, vyšetření se uloží samo'; b.textContent = 'Vybrat pacienta a uložit'; }
+}
+$('#saveState').addEventListener('click', () => { if (hasData(M.exam) && !M.exam.patientId) { pendingSave = true; openSheet(); } });
 function sideShort(v) { return Math.abs(v) < .5 ? '' : v > 0 ? 'P' : 'L'; }
 // studio region chips: Th ●●○
 function renderRegs() {
@@ -664,7 +685,7 @@ function renderResults() {
     ? `<div class="row" style="justify-content:space-between"><h3>Sken páteře</h3><button class="btn ghost" id="rScanOpen" style="min-height:36px">Detail</button></div><div class="chartBox" style="aspect-ratio:3/1"><canvas id="rScanChart"></canvas></div><p class="small muted">${scanSummaryText(sc)}</p>`
     : `<div class="row" style="justify-content:space-between"><h3>Sken páteře</h3><span class="small muted">zatím bez skenu</span></div><p class="small muted">Na šířku stiskněte SKEN (vpravo dole), telefon se samospouští usadíte u C7 a pak ho posunete ke kříži.</p>`;
   if (sc) requestAnimationFrame(() => drawMiniScan(sc));
-  $('#examNote').value = ex.note || '';
+  $('#examNote').value = ex.note || ''; renderSaveState();
   $('#mPat').textContent = curPatient() ? curPatient().code : 'Bez pacienta';
   renderRegs();
 }
@@ -689,28 +710,20 @@ $('#rList').addEventListener('click', e => {
   saveDraft(); renderResults(); toast('Přiložení smazáno.');
 });
 $('#examNote').addEventListener('input', e => { M.exam.note = e.target.value; saveDraft(); });
-$('#saveExam').addEventListener('click', () => {
-  const has = RK.some(k => M.exam.regions[k].length) || M.exam.scan;
-  if (!has) { toast('Nejdřív změřte alespoň jednu oblast nebo udělejte sken.'); return; }
-  if (!curPatient()) { pendingSave = true; openSheet(); toast('Vyberte pacienta, ke kterému se vyšetření uloží.'); return; }
-  doSaveExam();
-});
+$('#saveExam').addEventListener('click', finishExam);
 let pendingSave = false;
-function doSaveExam() {
-  const ex = JSON.parse(JSON.stringify(M.exam)); ex.patientId = DB.current; ex.date = new Date().toISOString();
-  DB.exams.push(ex); DB.draft = null; save();
+// Ending an exam: it is already saved, so just open the patient's folder and start a fresh one.
+function finishExam() {
+  if (!hasData(M.exam)) { toast('Zatím nic změřeno.'); return; }
+  if (!M.exam.patientId) { pendingSave = true; openSheet(); toast('Vyberte pacienta, vyšetření se do jeho složky uloží.'); return; }
+  saveDraft(); const ex = M.exam, pid = ex.patientId;
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean);
-  say('Uloženo. ' + parts.join('. '));
-  toast(`Uloženo do složky ${curPatient().code}.`);
-  startNewExam(); openFolder(DB.current, ex.id);
+  say('Vyšetření ukončeno. ' + parts.join('. '));
+  toast(`Vyšetření je ve složce ${patient(pid).code}.`);
+  startNewExam(); openFolder(pid, ex.id);
 }
 function startNewExam() { M.exam = newExam(); M.hist = []; DB.draft = null; save(); setRegion('th'); renderResults(); }
-let newArm = 0;
-$('#newExamBtn').addEventListener('click', e => {
-  const has = RK.some(k => M.exam.regions[k].length) || M.exam.scan;
-  if (has && Date.now() - newArm > 3000) { newArm = Date.now(); toast('Neuložené hodnoty se smažou. Klepněte znovu.'); return; }
-  startNewExam(); toast('Nové vyšetření.');
-});
+$('#newExamBtn').addEventListener('click', () => { const pid = M.exam.patientId || DB.current; pid ? openFolder(pid) : show('patients'); });
 function examLine(ex) {
   const prev = prevExam(ex);
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].short} ${fmt(Math.abs(st.m))}° ${sideShort(st.m) || '0'}${st.n > 1 ? ` (±${fmt(st.sd)}, n=${st.n})` : ''}` : null; }).filter(Boolean);
@@ -857,6 +870,10 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<'
 let detailId = null;
 function examsOf(pid) { return DB.exams.filter(e => e.patientId === pid).sort((a, b) => a.date.localeCompare(b.date)); }
 const dShort = d => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: '2-digit' }).replace(/\s/g, '');
+function scanChips(sc) {
+  const pk = RK.map(k => sc.peaks && sc.peaks[k]).filter(x => x && Math.abs(x.v) >= 1);
+  return `<span class="brk"></span>${SCAN_TAG}` + (pk.length ? pk.map(x => `<span class="rv ${cls(x.v).k}"><i>${REG[x.k].short}</i>${fmt(Math.abs(x.v))}°${sideShort(x.v)}</span>`).join('') : '<span class="small muted">bez výrazné rotace</span>') + (sc.double ? '<span class="small muted">dvojitý oblouk</span>' : '');
+}
 function rvChips(ex) { return RK.map(k => { const st = stats(ex.regions[k]); if (!st) return `<span class="rv"><i>${REG[k].short}</i>–</span>`; return `<span class="rv ${cls(st.m).k}"><i>${REG[k].short}</i>${fmt(Math.abs(st.m))}°${sideShort(st.m)}</span>`; }).join(''); }
 const SCAN_TAG = `<span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20"/><path d="M8 5c3 1 5 3 4 7s-3 6 0 9"/></svg>sken</span>`;
 const CHEV = `<svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
@@ -886,7 +903,7 @@ function renderDetail() {
   $('#trendCard').hidden = ex.length < 1;
   $('#exList').innerHTML = ex.length ? ex.slice().reverse().map(e => {
     const d = new Date(e.date);
-    return `<button class="exrow" data-ex="${e.id}"${e.id === folderHi ? ' style="border-color:var(--gold);box-shadow:0 0 0 2px var(--pt)"' : ''}><div class="exd"><b>${d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }).replace(/\s/g, '')}</b><span>${d.getFullYear()} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span></div><div class="exv">${rvChips(e)}${e.scan ? SCAN_TAG : ''}${e.note ? `<span class="small muted" style="width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.note)}</span>` : ''}</div>${CHEV}</button>`;
+    return `<button class="exrow" data-ex="${e.id}"${e.id === folderHi ? ' style="border-color:var(--gold);box-shadow:0 0 0 2px var(--pt)"' : ''}><div class="exd"><b>${d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }).replace(/\s/g, '')}</b><span>${d.getFullYear()} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span></div><div class="exv">${RK.some(k => e.regions[k].length) ? rvChips(e) : ''}${e.scan ? scanChips(e.scan) : ''}${e.note ? `<span class="small muted" style="width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.note)}</span>` : ''}</div>${CHEV}</button>`;
   }).join('') : '<p class="small muted" style="padding:4px 2px">Zatím žádné vyšetření. Klepněte na Měřit tohoto pacienta.</p>';
   if (ex.length) requestAnimationFrame(() => drawTrend(ex));
 }
@@ -917,7 +934,7 @@ let exDelArm = 0;
 $('#exDelete').addEventListener('click', e => {
   const ex = EXV.ex; if (!ex || ex === M.exam) return;
   if (Date.now() - exDelArm > 4000) { exDelArm = Date.now(); e.target.textContent = 'Opravdu smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat vyšetření', 4000); return; }
-  DB.exams = DB.exams.filter(x => x.id !== ex.id); save(); e.target.textContent = 'Smazat vyšetření'; toast('Vyšetření smazáno.'); back();
+  DB.exams = DB.exams.filter(x => x.id !== ex.id); if (M.exam.id === ex.id) startNewExam(); save(); e.target.textContent = 'Smazat vyšetření'; toast('Vyšetření smazáno.'); back();
 });
 function drawTrend(ex) {
   const c = $('#trend'); if (!c.offsetParent) return; const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
@@ -971,7 +988,7 @@ let delArm = 0;
 $('#delPatient').addEventListener('click', async e => {
   const p = patient(detailId); if (!p) return;
   if (Date.now() - delArm > 4000) { delArm = Date.now(); e.target.textContent = 'Opravdu smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat pacienta', 4000); return; }
-  DB.patients = DB.patients.filter(x => x.id !== p.id); DB.exams = DB.exams.filter(x => x.patientId !== p.id); if (DB.current === p.id) DB.current = null; detailId = null; save();
+  DB.patients = DB.patients.filter(x => x.id !== p.id); DB.exams = DB.exams.filter(x => x.patientId !== p.id); if (DB.current === p.id) DB.current = null; if (M.exam.patientId === p.id) startNewExam(); detailId = null; save();
   e.target.textContent = 'Smazat pacienta'; renderHeader(); renderResults(); toast('Pacient smazán.'); back();
 });
 
@@ -989,7 +1006,11 @@ $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeS
 function selectPatient(id) {
   DB.current = id || null; save(); renderHeader(); renderResults(); if (view === 'patients') renderPatients();
   const ps = pendingSave; $('#sheet').hidden = true; pendingSave = false;
-  if (ps && DB.current) doSaveExam();
+  // another patient while an exam of someone else is open: that one stays in its folder, start a new one
+  if (M.exam.patientId && M.exam.patientId !== DB.current && hasData(M.exam)) { startNewExam(); toast(`Nové vyšetření: ${curPatient() ? curPatient().code : 'bez pacienta'}.`); }
+  else if (DB.current) saveDraft();
+  renderHeader(); renderResults();
+  if (ps && DB.current) finishExam();
 }
 $('#sheetList').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) selectPatient(b.dataset.id); });
 $('#pForm').addEventListener('submit', e => {
@@ -1146,7 +1167,7 @@ function handleCmd(t) {
   else if (/přechod|torako|thora/.test(t)) { setRegion('tl'); say('Přechod'); }
   else if (/měř|zazname|teď/.test(t)) lockNow();
   else if (/smaz|znovu/.test(t)) { clearRegion(); say('Smazáno'); }
-  else if (/ulož/.test(t)) $('#saveExam').click();
+  else if (/ulož|ukonči/.test(t)) finishExam();
   else if (/výsled|shrn|průměr/.test(t)) { const parts = RK.map(k => { const st = stats(M.exam.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean); say(parts.length ? parts.join('. ') : 'Zatím nic změřeno.'); }
 }
 
