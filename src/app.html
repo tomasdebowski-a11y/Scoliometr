@@ -227,6 +227,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .srot b{font-size:1.35rem}.srot span{color:var(--on-glass-dim);max-width:280px}
 @keyframes sRot{0%,20%{transform:rotate(0)}55%,85%{transform:rotate(90deg)}100%{transform:rotate(0)}}
 #studio.rot .srot{display:flex}
+#stage{transition:opacity .18s}
+#studio.settle #stage{opacity:0;transition:none}
 #studio.rot .regs,#studio.rot #sUndo,#studio.rot #sMenu,#studio.rot .sbot,#studio.rot .sgrow{visibility:hidden}
 #stage.narrow .stop{gap:6px}
 #stage.narrow .gbtn{width:42px;height:42px}
@@ -1388,7 +1390,13 @@ function studioUpdate() {
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
   // held upright (long axis more vertical than the short one): no dial, just ask to turn the phone
   const rot = want && !scan.running && !land && Math.abs(y) >= Math.abs(x);
-  if (rot !== STU.rot) { STU.rot = rot; $('#studio').classList.toggle('rot', rot); }
+  if (rot !== STU.rot) { STU.rot = rot; STU.settleT = now; $('#studio').classList.toggle('rot', rot); }
+  // while the screen or the stage is turning, iOS reports size, angle and gravity out of step for a moment:
+  // keep the stage hidden until they agree, so it never flashes upside down
+  const sig = `${innerWidth}x${innerHeight}a${screenAngle()}`;
+  if (sig !== STU.sig) { STU.sig = sig; STU.settleT = now; }
+  const settle = want && now - (STU.settleT || 0) < 450;
+  if (settle !== STU.settle) { STU.settle = settle; $('#studio').classList.toggle('settle', settle); }
   if (want !== STU.on) {
     STU.on = want; $('#studio').hidden = !want; closeMenu();
     if (want) { M.state = 'away'; renderRegs(); } else renderResults();
@@ -1422,6 +1430,7 @@ function layoutStage() {
   const th = STU.th, swap = Math.abs(Math.sin(th)) > .5, W = swap ? innerHeight : innerWidth, H = swap ? innerWidth : innerHeight;
   const key = `${W}x${H}r${th.toFixed(2)}`;
   if (key !== STU.key) {
+    if (STU.key) STU.settleT = performance.now();
     STU.key = key; const s = $('#stage').style; s.width = W + 'px'; s.height = H + 'px'; s.transform = `translate(-50%,-50%) rotate(${th}rad)`;
     // notch and home indicator: map the screen's safe-area insets onto the rotated stage's edges
     const cs = getComputedStyle($('#safeProbe')), ins = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
