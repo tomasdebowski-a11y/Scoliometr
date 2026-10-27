@@ -1411,7 +1411,12 @@ function studioUpdate() {
   // keep the stage hidden until they agree, so it never flashes upside down
   const sig = `${innerWidth}x${innerHeight}a${screenAngle()}`;
   if (sig !== STU.sig) { STU.sig = sig; STU.settleT = now; }
-  const settle = want && now - (STU.settleT || 0) < 450;
+  // phone turned sideways but the screen still portrait: iOS may be about to rotate the whole screen with its own
+  // animation, which would turn our already-rotated stage once more. Wait for it; with rotation locked it never comes.
+  const gravLand = Math.abs(x) > Math.abs(y);
+  if (want && !land && gravLand && !scan.running) { if (!STU.pendT) STU.pendT = now; } else STU.pendT = 0;
+  const pend = STU.pendT && now - STU.pendT < 700;
+  const settle = want && (pend || now - (STU.settleT || 0) < 450);
   if (settle !== STU.settle) { STU.settle = settle; $('#studio').classList.toggle('settle', settle); }
   if (want !== STU.on) {
     STU.on = want; $('#studio').hidden = !want; closeMenu();
