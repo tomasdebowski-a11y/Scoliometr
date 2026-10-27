@@ -391,6 +391,32 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </ul>
       </details>
       <details class="card">
+        <summary>Sken páteře: jak ho číst</summary>
+        <h3>Co sken ukazuje</h3>
+        <ul>
+          <li>Křivka je průběh rotace trupu (ATR) od C7 (vlevo) ke kříži (vpravo). Nad nulou je val vpravo, pod nulou vlevo. Čárkované čáry jsou hranice 5° a 7°.</li>
+          <li>Vodorovná osa je poloha v procentech délky zad. Aplikace ji odhaduje ze sklonu zad, který se při posunu po předkloněném trupu plynule mění. Když sklon nestačí (krátký nebo nerovný pohyb), použije čas. Pod grafem vidíte, z čeho poloha vzešla.</li>
+          <li>Oblasti jsou dané podílem délky: hrudní 0–50 %, hrudně-bederní 50–68 %, bederní 68–100 %. Hranice jsou přibližné, u malých dětí a velmi vysokých pacientů se mohou posunout.</li>
+        </ul>
+        <h3>Vrcholy</h3>
+        <ul>
+          <li>V každé oblasti aplikace najde nejvyšší rotaci a ukáže, kde leží. Vrchol značí, kde je val největší, tedy kam přiložit telefon k bodovému měření.</li>
+          <li><b>Dvojitý oblouk:</b> rotace aspoň 3° na obě strany v jednom skenu (typicky hrudní vpravo a bederní vlevo). Odpovídá dvouobloukové křivce; ověřte ji bodovým měřením v obou vrcholech.</li>
+          <li>Pokud má bodové měření v téže oblasti, u vrcholu uvidíte i bodovou hodnotu a rozdíl.</li>
+        </ul>
+        <h3>Jak skenovat</h3>
+        <ul>
+          <li>Pacient v předklonu, telefon na šířku napříč zády, výřez nad trny. Začněte u C7, po samospoušti veďte telefon plynule ke kříži asi 5–10 s, lehce, bez tlaku a bez kolébání.</li>
+          <li>Sken ukončíte zvednutím telefonu. Udělejte raději dva a porovnejte, zda vrcholy vycházejí na stejném místě.</li>
+        </ul>
+        <h3>Sken, nebo bodové měření?</h3>
+        <ul>
+          <li><b>Sken je mapa, bodové měření je výsledek.</b> Do dokumentace a k rozhodnutí o RTG platí průměr ze tří bodových přiložení v místě vrcholu, protože tak byl skoliometr ověřen (Bunnell).</li>
+          <li>Hodnota ze skenu se od bodové může lišit o několik stupňů oběma směry: telefon se při posunu kolébá, mění se tlak a pacient se v předklonu pohybuje. Sken také měří v jedné hloubce předklonu, kdežto bodově můžete pro každou oblast zvolit tu nejlepší.</li>
+          <li>Shodu skenu tohoto typu s bodovým měřením zatím nikdo neověřil. Aplikace proto u každého vrcholu ukazuje rozdíl proti bodovému měření, abyste si shodu mohli ověřit na vlastních pacientech.</li>
+        </ul>
+      </details>
+      <details class="card">
         <summary>Jak výsledky vyhodnocovat</summary>
         <ul>
           <li><b>ATR (úhel rotace trupu)</b> není Cobbův úhel. Ukazuje rotační složku deformity a slouží ke screeningu a sledování.</li>
@@ -503,6 +529,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 
 <div id="safeProbe" aria-hidden="true"></div>
+<div class="overlay" id="practice" hidden>
+  <div class="sheetBox" role="alertdialog" aria-labelledby="prT">
+    <h2 id="prT">Zkušební měření</h2>
+    <p class="small muted">Měřili jste bez pacienta, takže se nikam neuložilo. Chcete ho zahodit, nebo z něj založit nového pacienta?</p>
+    <button class="btn" data-p="drop">Zahodit</button>
+    <button class="btn primary" data-p="new">Uložit jako nového pacienta</button>
+    <button class="btn" data-p="back" style="border:0;background:transparent">Zpět</button>
+  </div>
+</div>
 <div class="overlay" id="sheet" hidden>
   <div class="sheetBox">
     <div class="row" style="justify-content:space-between"><h2 id="sheetTitle">Pacient</h2><button class="iconbtn" id="sheetClose" aria-label="Zavřít"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -665,7 +700,7 @@ $('#simPlace').addEventListener('click', () => { SIM.lift = performance.now() + 
 
 /* ---------- measurement state ---------- */
 const M = { region: 'th', state: 'away', buf: [], stableStart: 0, lockVal: null, ticks: 0, exam: null, hist: [] };
-function newExam() { return { id: uid(), date: new Date().toISOString(), regions: { th: [], tl: [], l: [] }, scan: null, note: '' }; }
+function newExam() { return { id: uid(), date: new Date().toISOString(), regions: { th: [], tl: [], l: [] }, scan: null, note: '', practice: !DB.current }; }
 M.exam = newExam();
 // unfinished exam survives closing the app (same day only)
 if (DB.draft && DB.draft.regions && new Date(DB.draft.date).toDateString() === new Date().toDateString()) M.exam = DB.draft;
@@ -698,6 +733,7 @@ function tick(now) {
   }
 }
 function record(v) {
+  if (STU.upright && !scan.running) { toast('Otočte telefon na šířku a přiložte ho na záda.'); return; }
   const r = M.region, arr = M.exam.regions[r];
   if (arr.length >= 3) arr.shift();
   arr.push(Math.round(v * 10) / 10); M.hist.push(r);
@@ -733,7 +769,7 @@ function hasData(ex) { return RK.some(k => ex.regions[k].length) || !!ex.scan; }
 // Autosave: as soon as the open exam has a value it lives in the selected patient's folder and is kept up to date.
 function saveDraft() {
   const ex = M.exam, i = DB.exams.findIndex(e => e.id === ex.id);
-  if (!ex.patientId && DB.current && hasData(ex)) ex.patientId = DB.current;
+  if (!ex.patientId && !ex.practice && DB.current && hasData(ex)) ex.patientId = DB.current;
   if (ex.patientId && hasData(ex)) { if (i < 0) { ex.date = new Date().toISOString(); DB.exams.push(ex); } else DB.exams[i] = ex; }
   else if (i >= 0) DB.exams.splice(i, 1);
   DB.draft = ex; save(); renderSaveState();
@@ -741,7 +777,7 @@ function saveDraft() {
 function renderSaveState() {
   renderHeader();
   const el = $('#saveState'); if (!el) return; const ex = M.exam, p = patient(ex.patientId);
-  el.className = 'sstate ' + (p ? 'ok' : 'warn'); el.textContent = !hasData(ex) ? 'Zatím nic změřeno' : p ? `✓ Uloženo ve složce ${p.code}` : 'Vyberte pacienta, vyšetření se uloží samo';
+  el.className = 'sstate ' + (p ? 'ok' : 'warn'); el.textContent = !hasData(ex) ? 'Zatím nic změřeno' : p ? `✓ Uloženo ve složce ${p.code}` : ex.practice ? 'Zkušební měření, neukládá se' : 'Vyberte pacienta, vyšetření se uloží samo';
 }
 function sideShort(v) { return Math.abs(v) < .5 ? '' : v > 0 ? 'P' : 'L'; }
 // studio region chips: Th ●●○
@@ -777,7 +813,7 @@ function renderResults() {
   renderHeader();
   const ex = M.exam, has = hasData(ex), p = patient(ex.patientId);
   $('#examDate').textContent = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'numeric' });
-  $('#curCard').innerHTML = has ? `<div class="cur"><span class="lbl">ROZPRACOVANÉ VYŠETŘENÍ</span><span class="who">${p ? esc(p.code) : 'Bez pacienta'} · ${new Date(ex.date).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span><div class="exv">${RK.some(k => ex.regions[k].length) ? rvChips(ex) : ''}${ex.scan ? scanChips(ex.scan) : ''}</div><span class="st ${p ? 'ok' : 'warn'}">${p ? `✓ Uloženo ve složce ${esc(p.code)}` : 'Vyberte pacienta, vyšetření se uloží samo'}</span><div class="bt"><button id="cDetail">Výsledky</button><button class="go2" id="cMeasure">Měřit dál</button></div></div>` : '';
+  $('#curCard').innerHTML = has ? `<div class="cur"><span class="lbl">${ex.practice ? 'ZKUŠEBNÍ MĚŘENÍ' : 'ROZPRACOVANÉ VYŠETŘENÍ'}</span><span class="who">${p ? esc(p.code) : ex.practice ? 'Bez pacienta' : 'Bez pacienta'} · ${new Date(ex.date).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span><div class="exv">${RK.some(k => ex.regions[k].length) ? rvChips(ex) : ''}${ex.scan ? scanChips(ex.scan) : ''}</div><span class="st ${p ? 'ok' : 'warn'}">${p ? `✓ Uloženo ve složce ${esc(p.code)}` : ex.practice ? 'Neukládá se. Při ukončení ho můžete zahodit, nebo uložit jako nového pacienta.' : 'Vyberte pacienta, vyšetření se uloží samo'}</span><div class="bt"><button id="cDetail">Výsledky</button><button class="go2" id="cMeasure">Měřit dál</button></div></div>` : '';
   
   $('#mPat').textContent = curPatient() ? curPatient().code : 'Bez pacienta';
   renderRegs();
@@ -791,7 +827,7 @@ function goStudio() { STU.force = true; STU.hold = false; STU.left = false; }
 let pendingMeasure = false;
 // New measurement: the open exam is already saved, so it simply ends; without a patient, pick one first.
 $('#tNew').addEventListener('click', () => {
-  if (hasData(M.exam) && !M.exam.patientId) { pendingSave = true; openSheet(); toast('Nejdřív vyberte pacienta pro rozpracované vyšetření.'); return; }
+  if (hasData(M.exam) && !M.exam.patientId) { askPractice(() => { $('#tNew').click(); }); return; }
   if (hasData(M.exam)) startNewExam();
   pendingMeasure = true; openSheet(DB.patients.length ? 'pick' : '');
 });
@@ -811,13 +847,22 @@ let pendingSave = false;
 // Ending an exam: it is already saved, so just open the patient's folder and start a fresh one.
 function finishExam() {
   if (!hasData(M.exam)) { toast('Zatím nic změřeno.'); return; }
-  if (!M.exam.patientId) { pendingSave = true; openSheet(); toast('Vyberte pacienta, vyšetření se do jeho složky uloží.'); return; }
+  if (!M.exam.patientId) { askPractice(() => { show('measure'); toast('Zkušební měření zahozeno.'); }); return; }
   saveDraft(); const ex = M.exam, pid = ex.patientId;
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean);
   say('Vyšetření ukončeno. ' + parts.join('. '));
   toast(`Vyšetření je ve složce ${patient(pid).code}.`);
   startNewExam(); show('measure'); openFolder(pid, ex.id);
 }
+// practice measurement (no patient): never saved on its own; at the end discard it, or keep it as a new patient
+let pendingAdopt = false, practiceThen = null;
+function askPractice(then) { practiceThen = then; $('#practice').hidden = false; }
+$('#practice').addEventListener('click', e => {
+  const a = e.target.closest('[data-p]'); if (!a && e.target.id !== 'practice') return; $('#practice').hidden = true;
+  const k = a ? a.dataset.p : 'back';
+  if (k === 'drop') { startNewExam(); const t = practiceThen; practiceThen = null; if (t) t(); }
+  else if (k === 'new') { pendingAdopt = true; openSheet('new'); setTimeout(() => $('#pCode').focus(), 50); }
+});
 function startNewExam() { M.exam = newExam(); M.hist = []; DB.draft = null; save(); setRegion('th'); renderResults(); }
 function examLine(ex) {
   const prev = prevExam(ex);
@@ -925,7 +970,10 @@ function renderScanDetail(r) {
   if (!r) return;
   $('#scanSource').textContent = 'poloha odhadnuta ze ' + r.source;
   let h = '';
-  RK.forEach(k => { const pk = r.peaks[k]; if (!pk) return; const c = cls(pk.v); h += `<div class="peak"><span>${REG[k].name} <span class="muted small">· ${Math.round(pk.x * 100)} % délky</span></span><span><b class="num">${fmt(Math.abs(pk.v))}°</b> ${sideWord(pk.v)} <span class="pill ${c.k}"><span class="dot"></span>${c.t}</span></span></div>`; });
+  const ex = EXV.ex;
+  RK.forEach(k => { const pk = r.peaks[k]; if (!pk) return; const c = cls(pk.v); const st = ex ? stats(ex.regions[k]) : null;
+    const cmp = st ? `<span class="muted small">bodově ${fmt(Math.abs(st.m))}° ${sideShort(st.m)} · rozdíl ${fmt(Math.abs(Math.abs(pk.v) - Math.abs(st.m)))}°${Math.sign(pk.v) !== Math.sign(st.m) && Math.abs(st.m) >= 1 && Math.abs(pk.v) >= 1 ? ', jiná strana' : ''}</span>` : '';
+    h += `<div class="peak"><span>${REG[k].name} <span class="muted small">· ${Math.round(pk.x * 100)} % délky</span>${cmp ? '<br>' + cmp : ''}</span><span><b class="num">${fmt(Math.abs(pk.v))}°</b> ${sideWord(pk.v)} <span class="pill ${c.k}"><span class="dot"></span>${c.t}</span></span></div>`; });
   if (r.double) h += `<p class="small"><b>Dvojitý oblouk:</b> rotace vpravo ${fmt(r.maxR)}° a vlevo ${fmt(Math.abs(r.maxL))}°.</p>`;
   h += `<p class="small muted">Sken slouží k nalezení vrcholu. Rozhodující hodnotu změřte v místě vrcholu třemi přiloženími na šířku.</p>`;
   $('#peaks').innerHTML = h;
@@ -1010,12 +1058,12 @@ $('#measurePatient').addEventListener('click', () => {
 const EXV = { ex: null, scan: null };
 function openExam(ex) { EXV.ex = ex.id === M.exam.id ? M.exam : ex; show('exam'); }
 function renderExam() {
-  const ex = EXV.ex; if (!ex) return; const open = ex.id === M.exam.id, p = patient(ex.patientId || (open ? DB.current : null));
+  const ex = EXV.ex; if (!ex) return; const open = ex.id === M.exam.id, p = patient(ex.patientId || (open && !ex.practice ? DB.current : null));
   $('#pageTitle').textContent = p ? p.code : 'Vyšetření';
   $('#exTitle').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  $('#exMeta').textContent = 'ATR, Adamsův předklon' + (p ? ` · ${p.code}` : '');
+  $('#exMeta').textContent = 'ATR, Adamsův předklon' + (p ? ` · ${p.code}` : ex.practice ? ' · zkušební měření' : '');
   $('#exBadge').innerHTML = open ? '<span class="badge">probíhá</span>' : '';
-  $('#exRegions').innerHTML = regionCards(ex, prevExam(ex, ex.patientId || DB.current), open);
+  $('#exRegions').innerHTML = regionCards(ex, ex.practice ? null : prevExam(ex, ex.patientId || DB.current), open);
   EXV.scan = ex.scan ? expandScan(ex.scan) : (open && scan.result ? scan.result : null);
   $('#exScan').hidden = !EXV.scan; if (EXV.scan) requestAnimationFrame(() => renderScanDetail(EXV.scan));
   $('#exNoteCard').hidden = open || !ex.note; $('#exNote').textContent = ex.note || '';
@@ -1094,16 +1142,22 @@ function openSheet(mode) {
   $('#sheetTitle').textContent = mode === 'pick' ? 'Koho budeme měřit?' : mode === 'new' ? 'Nový pacient' : 'Pacient';
   $('#sheetList').hidden = mode === 'new'; $('#pForm').hidden = mode === 'pick';
   $('#pForm h3').hidden = mode === 'new'; $('#pSubmit').textContent = pendingMeasure ? 'Přidat a měřit' : 'Přidat a vybrat';
-  $('#sheetList').innerHTML = ps.map(patientRow).join('') + `<li><button data-id=""><span style="flex:1" class="muted">Bez pacienta</span></button></li>`;
+  $('#sheetList').innerHTML = ps.map(patientRow).join('') + `<li><button data-id=""><span style="flex:1"><b>Zkušební měření</b><br><span class="small muted">bez pacienta, neukládá se</span></span></button></li>`;
   $('#sheet').hidden = false;
 }
-function closeSheet() { $('#sheet').hidden = true; pendingSave = false; pendingMeasure = false; }
+function closeSheet() { $('#sheet').hidden = true; pendingSave = false; pendingMeasure = false; pendingAdopt = false; }
 $('#newPatient2').addEventListener('click', () => { openSheet(); setTimeout(() => $('#pCode').focus(), 50); });
 $('#sheetClose').addEventListener('click', closeSheet);
 $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
 function selectPatient(id) {
   DB.current = id || null; save(); renderHeader(); renderResults(); if (view === 'patients') renderPatients();
   const ps = pendingSave; $('#sheet').hidden = true; pendingSave = false;
+  // practice measurement kept as a new patient: move it into the new folder and finish
+  if (pendingAdopt) { pendingAdopt = false; if (DB.current && hasData(M.exam)) { M.exam.practice = false; M.exam.patientId = DB.current; saveDraft(); finishExam(); } return; }
+  // practice data never goes into someone's folder
+  if (M.exam.practice && hasData(M.exam) && DB.current) { startNewExam(); toast('Zkušební měření zahozeno.'); }
+  // a fresh exam belongs to the chosen patient, or is a practice one without a patient
+  if (!hasData(M.exam)) { M.exam.patientId = DB.current; M.exam.practice = !DB.current; }
   // another patient while an exam of someone else is open: that one stays in its folder, start a new one
   if (M.exam.patientId && M.exam.patientId !== DB.current && hasData(M.exam)) { startNewExam(); toast(`Nové vyšetření: ${curPatient() ? curPatient().code : 'bez pacienta'}.`); }
   else if (DB.current) saveDraft();
@@ -1415,7 +1469,7 @@ function drawStudio() {
   const ry = y0 + tubeW + clamp(H * .16, 34, 80);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = M.state === 'locked' || rec ? col[c2.k] : col.ink;
   ctx.font = `600 ${Math.min(clamp(H * .22, 40, 104), W / 4.8)}px ${css('--f-num')}`;
-  ctx.fillText(`${fmt(Math.abs(v))}°${Math.abs(v) < .5 ? '' : v > 0 ? ' P' : ' L'}`, 0, ry);
+  ctx.fillText(STU.upright && !scan.running ? '—' : `${fmt(Math.abs(v))}°${Math.abs(v) < .5 ? '' : v > 0 ? ' P' : ' L'}`, 0, ry);
   const sub = ry + clamp(H * .14, 30, 64);
   ctx.font = `500 ${clamp(H * .05, 12, 16)}px ${css('--f-num')}`;
   if (rec) {
