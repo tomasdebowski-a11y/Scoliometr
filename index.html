@@ -753,7 +753,7 @@ function record(v) {
   const r = M.region, arr = M.exam.regions[r];
   if (arr.length >= 3) arr.shift();
   arr.push(Math.round(v * 10) / 10); M.hist.push(r);
-  STU.left = true;
+  STU.left = true; STU.measured = true;
   M.state = 'locked'; M.lockVal = v; M.stableStart = 0;
   chord(); buzz([35, 50, 35]);
   const st = stats(arr);
@@ -955,7 +955,7 @@ function finishScan(auto) {
   clearInterval(scan.countIv); sonicStop(); scan.running = false; scan.phase = '';
   let d = scan.data; if (d.length) { const T = d[d.length - 1].t; d = d.filter(s => s.t > .15 && s.t < T - (auto ? .35 : .05)); }
   if (d.length < 30) { toast('Sken byl příliš krátký. Posouvejte telefon plynule 4–6 sekund.'); return; }
-  STU.left = true;
+  STU.left = true; STU.measured = true;
   scan.result = analyzeScan(d); chord(); buzz([40, 60, 40]);
   const r = scan.result; const best = RK.map(k => r.peaks[k]).filter(Boolean).sort((x, y) => Math.abs(y.v) - Math.abs(x.v))[0];
   M.exam.scan = compactScan(r); saveDraft(); renderResults();
@@ -1418,6 +1418,8 @@ function studioUpdate() {
   const trig = land || p === 'edgeA' || p === 'edgeB';
   // opened by a button, the studio stays until something has been measured (then upright = results) or the back arrow
   if (STU.left && STU.upT && now - STU.upT > 800 && !scan.running) STU.force = false;
+  // turning the phone sideways on the results of the open exam goes back to measuring it
+  if (trig && !STU.trig && view === 'exam' && EXV.ex && EXV.ex.id === M.exam.id) show('measure');
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
   // until the dial can be shown the right way round, the studio only asks to turn the phone
@@ -1425,7 +1427,13 @@ function studioUpdate() {
   if (rot !== STU.rot) { STU.rot = rot; $('#studio').classList.toggle('rot', rot); }
   if (want !== STU.on) {
     STU.on = want; $('#studio').hidden = !want; closeMenu();
-    if (want) { M.state = 'away'; renderRegs(); } else renderResults();
+    if (want) { M.state = 'away'; renderRegs(); STU.measured = false; }
+    else {
+      renderResults();
+      // finished measuring (phone turned upright): go straight to the results; the back arrow leaves to the home screen
+      if (STU.measured && !STU.toHome && hasData(M.exam)) openExam(M.exam);
+      STU.toHome = false; STU.measured = false;
+    }
   }
   return want;
 }
@@ -1437,7 +1445,7 @@ $('#studio').addEventListener('click', e => {
 $('#sUndo').addEventListener('click', undoLast);
 $('#sBack').addEventListener('click', () => {
   if (scan.running) { if (scan.phase === 'count') scanCancel(); else finishScan(false); }
-  STU.hold = true; STU.force = false; studioUpdate();
+  STU.hold = true; STU.force = false; STU.toHome = true; studioUpdate();
 });
 $('#sShutter').addEventListener('click', () => {
   if (!scan.running) scanBegin();
