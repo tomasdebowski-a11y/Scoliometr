@@ -368,7 +368,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="card">
         <h2>Ovládání</h2>
         <ol class="gsteps">
-          <li><b>Nový pacient</b> založí složku a rovnou spustí měření. <b>Nové měření</b> se nejdřív zeptá, koho měříte.</li>
+          <li><b>Nový pacient</b> založí složku a rovnou spustí měření. <b>Nové měření</b> jde rovnou na měření; pacienta vyberete až při ukončení (nebo měření zahodíte). Kontrolu známého pacienta spustíte ve Složkách tlačítkem Měřit tohoto pacienta.</li>
           <li>Otočte telefon na šířku a postavte ho napříč zády na dlouhou hranu, displejem k sobě. Výřez mezi palci nechte nad trny.</li>
           <li><b>Klepnutím kamkoli</b> na displej zapíšete hodnotu. Po třech přiloženích aplikace sama přejde na další oblast (Th → Th‑L → L). Šipka <b>↶</b> vrátí poslední zápis, šipka <b>‹</b> vede zpět na úvod.</li>
           <li><b>Sken</b>: červené tlačítko spustí samospoušť, telefon položte na C7 a pomalu ho veďte ke kříži. Zvednutím sken skončí a aplikace najde vrcholy.</li>
@@ -544,10 +544,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div id="safeProbe" aria-hidden="true"></div>
 <div class="overlay" id="practice" hidden>
   <div class="sheetBox" role="alertdialog" aria-labelledby="prT">
-    <h2 id="prT">Zkušební měření</h2>
-    <p class="small muted">Měřili jste bez pacienta, takže se nikam neuložilo. Chcete ho zahodit, nebo z něj založit nového pacienta?</p>
+    <h2 id="prT">Uložit měření?</h2>
+    <p class="small muted">Měření zatím nepatří žádnému pacientovi. Uložte ho do složky pacienta (stávajícího nebo nového), nebo ho zahoďte.</p>
+    <button class="btn primary" data-p="new">Uložit k pacientovi</button>
     <button class="btn" data-p="drop">Zahodit</button>
-    <button class="btn primary" data-p="new">Uložit jako nového pacienta</button>
     <button class="btn" data-p="back" style="border:0;background:transparent">Zpět</button>
   </div>
 </div>
@@ -793,7 +793,7 @@ function saveDraft() {
 function renderSaveState() {
   renderHeader();
   const el = $('#saveState'); if (!el) return; const ex = M.exam, p = patient(ex.patientId);
-  el.className = 'sstate ' + (p ? 'ok' : 'warn'); el.textContent = !hasData(ex) ? 'Zatím nic změřeno' : p ? `✓ Uloženo ve složce ${p.code}` : ex.practice ? 'Zkušební měření, neukládá se' : 'Vyberte pacienta, vyšetření se uloží samo';
+  el.className = 'sstate ' + (p ? 'ok' : 'warn'); el.textContent = !hasData(ex) ? 'Zatím nic změřeno' : p ? `✓ Uloženo ve složce ${p.code}` : ex.practice ? 'Zatím neuloženo, pacienta vyberete při ukončení' : 'Vyberte pacienta, vyšetření se uloží samo';
 }
 function sideShort(v) { return Math.abs(v) < .5 ? '' : v > 0 ? 'P' : 'L'; }
 // studio region chips: Th ●●○
@@ -829,7 +829,7 @@ function renderResults() {
   renderHeader();
   const ex = M.exam, has = hasData(ex), p = patient(ex.patientId);
   $('#examDate').textContent = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'numeric' });
-  $('#curCard').innerHTML = has ? `<div class="cur"><span class="lbl">${ex.practice ? 'ZKUŠEBNÍ MĚŘENÍ' : 'ROZPRACOVANÉ VYŠETŘENÍ'}</span><span class="who">${p ? esc(p.code) : ex.practice ? 'Bez pacienta' : 'Bez pacienta'} · ${new Date(ex.date).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span><div class="exv">${RK.some(k => ex.regions[k].length) ? rvChips(ex) : ''}${ex.scan ? scanChips(ex.scan) : ''}</div><span class="st ${p ? 'ok' : 'warn'}">${p ? `✓ Uloženo ve složce ${esc(p.code)}` : ex.practice ? 'Neukládá se. Při ukončení ho můžete zahodit, nebo uložit jako nového pacienta.' : 'Vyberte pacienta, vyšetření se uloží samo'}</span><div class="bt"><button id="cDetail">Výsledky</button><button class="go2" id="cMeasure">Měřit dál</button></div></div>` : '';
+  $('#curCard').innerHTML = has ? `<div class="cur"><span class="lbl">${ex.practice ? 'MĚŘENÍ BEZ PACIENTA' : 'ROZPRACOVANÉ VYŠETŘENÍ'}</span><span class="who">${p ? esc(p.code) : ex.practice ? 'Bez pacienta' : 'Bez pacienta'} · ${new Date(ex.date).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span><div class="exv">${RK.some(k => ex.regions[k].length) ? rvChips(ex) : ''}${ex.scan ? scanChips(ex.scan) : ''}</div><span class="st ${p ? 'ok' : 'warn'}">${p ? `✓ Uloženo ve složce ${esc(p.code)}` : ex.practice ? 'Zatím neuloženo. Při ukončení ho uložíte k pacientovi, nebo zahodíte.' : 'Vyberte pacienta, vyšetření se uloží samo'}</span><div class="bt"><button id="cDetail">Výsledky</button><button class="go2" id="cMeasure">Měřit dál</button></div></div>` : '';
   
   $('#mPat').textContent = curPatient() ? curPatient().code : 'Bez pacienta';
   renderRegs();
@@ -844,8 +844,10 @@ let pendingMeasure = false;
 // New measurement: the open exam is already saved, so it simply ends; without a patient, pick one first.
 $('#tNew').addEventListener('click', () => {
   if (hasData(M.exam) && !M.exam.patientId) { askPractice(() => { $('#tNew').click(); }); return; }
+  // straight to measuring; the patient is chosen when the measurement is saved
   if (hasData(M.exam)) startNewExam();
-  pendingMeasure = true; openSheet(DB.patients.length ? 'pick' : '');
+  DB.current = null; M.exam.patientId = null; M.exam.practice = true; save(); renderResults();
+  goStudio();
 });
 $('#tPatient').addEventListener('click', () => { pendingMeasure = true; openSheet('new'); setTimeout(() => $('#pCode').focus(), 50); });
 $('#tFolders').addEventListener('click', () => show('patients'));
@@ -863,7 +865,7 @@ let pendingSave = false;
 // Ending an exam: it is already saved, so just open the patient's folder and start a fresh one.
 function finishExam() {
   if (!hasData(M.exam)) { toast('Zatím nic změřeno.'); return; }
-  if (!M.exam.patientId) { askPractice(() => { show('measure'); toast('Zkušební měření zahozeno.'); }); return; }
+  if (!M.exam.patientId) { askPractice(() => { show('measure'); toast('Měření zahozeno.'); }); return; }
   saveDraft(); const ex = M.exam, pid = ex.patientId;
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean);
   say('Vyšetření ukončeno. ' + parts.join('. '));
@@ -877,7 +879,7 @@ $('#practice').addEventListener('click', e => {
   const a = e.target.closest('[data-p]'); if (!a && e.target.id !== 'practice') return; $('#practice').hidden = true;
   const k = a ? a.dataset.p : 'back';
   if (k === 'drop') { startNewExam(); const t = practiceThen; practiceThen = null; if (t) t(); }
-  else if (k === 'new') { pendingAdopt = true; openSheet('new'); setTimeout(() => $('#pCode').focus(), 50); }
+  else if (k === 'new') { pendingAdopt = true; openSheet('adopt'); }
 });
 function startNewExam() { M.exam = newExam(); M.hist = []; DB.draft = null; save(); setRegion('th'); renderResults(); }
 function examLine(ex) {
@@ -1078,7 +1080,7 @@ function renderExam() {
   const ex = EXV.ex; if (!ex) return; const open = ex.id === M.exam.id, p = patient(ex.patientId || (open && !ex.practice ? DB.current : null));
   $('#pageTitle').textContent = p ? p.code : 'Vyšetření';
   $('#exTitle').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  $('#exMeta').textContent = 'ATR, Adamsův předklon' + (p ? ` · ${p.code}` : ex.practice ? ' · zkušební měření' : '');
+  $('#exMeta').textContent = 'ATR, Adamsův předklon' + (p ? ` · ${p.code}` : ex.practice ? ' · bez pacienta' : '');
   $('#exBadge').innerHTML = open ? '<span class="badge">probíhá</span>' : '';
   $('#exRegions').innerHTML = regionCards(ex, ex.practice ? null : prevExam(ex, ex.patientId || DB.current), open);
   EXV.scan = ex.scan ? expandScan(ex.scan) : (open && scan.result ? scan.result : null);
@@ -1156,10 +1158,10 @@ $('#delPatient').addEventListener('click', async e => {
 // mode: 'pick' = jen seznam, 'new' = jen formulář, jinak obojí
 function openSheet(mode) {
   const ps = [...DB.patients].sort((a, b) => (b.id === DB.current) - (a.id === DB.current) || a.code.localeCompare(b.code, 'cs'));
-  $('#sheetTitle').textContent = mode === 'pick' ? 'Koho budeme měřit?' : mode === 'new' ? 'Nový pacient' : 'Pacient';
+  $('#sheetTitle').textContent = mode === 'pick' ? 'Koho budeme měřit?' : mode === 'new' ? 'Nový pacient' : mode === 'adopt' ? 'Komu měření uložit?' : 'Pacient';
   $('#sheetList').hidden = mode === 'new'; $('#pForm').hidden = mode === 'pick';
-  $('#pForm h3').hidden = mode === 'new'; $('#pSubmit').textContent = pendingMeasure ? 'Přidat a měřit' : 'Přidat a vybrat';
-  $('#sheetList').innerHTML = ps.map(patientRow).join('') + `<li><button data-id=""><span style="flex:1"><b>Zkušební měření</b><br><span class="small muted">bez pacienta, neukládá se</span></span></button></li>`;
+  $('#pForm h3').hidden = mode === 'new'; $('#pSubmit').textContent = pendingAdopt ? 'Přidat a uložit' : pendingMeasure ? 'Přidat a měřit' : 'Přidat a vybrat';
+  $('#sheetList').innerHTML = ps.map(patientRow).join('') + (mode === 'adopt' ? '' : `<li><button data-id=""><span style="flex:1"><b>Bez pacienta</b><br><span class="small muted">měření se uloží až na konci k vybranému pacientovi</span></span></button></li>`);
   $('#sheet').hidden = false;
 }
 function closeSheet() { $('#sheet').hidden = true; pendingSave = false; pendingMeasure = false; pendingAdopt = false; }
@@ -1172,7 +1174,7 @@ function selectPatient(id) {
   // practice measurement kept as a new patient: move it into the new folder and finish
   if (pendingAdopt) { pendingAdopt = false; if (DB.current && hasData(M.exam)) { M.exam.practice = false; M.exam.patientId = DB.current; saveDraft(); finishExam(); } return; }
   // practice data never goes into someone's folder
-  if (M.exam.practice && hasData(M.exam) && DB.current) { startNewExam(); toast('Zkušební měření zahozeno.'); }
+  if (M.exam.practice && hasData(M.exam) && DB.current) { startNewExam(); toast('Neuložené měření zahozeno.'); }
   // a fresh exam belongs to the chosen patient, or is a practice one without a patient
   if (!hasData(M.exam)) { M.exam.patientId = DB.current; M.exam.practice = !DB.current; }
   // another patient while an exam of someone else is open: that one stays in its folder, start a new one
