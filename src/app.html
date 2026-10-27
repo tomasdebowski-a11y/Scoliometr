@@ -220,6 +220,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .stop{position:absolute;top:calc(10px + var(--st,0px));left:calc(10px + var(--sl,0px));right:calc(10px + var(--sr,0px));display:flex;gap:8px;align-items:center;pointer-events:none}
 .stop>*{pointer-events:auto}
 .sgrow{flex:1}
+.srot{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;background:var(--stage);pointer-events:none}
+.srot svg{width:158px;height:132px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.srot .ph{transform-origin:60px 60px;animation:sRot 2.6s cubic-bezier(.6,0,.3,1) infinite}
+.srot .ar{stroke:var(--pt)}
+.srot b{font-size:1.35rem}.srot span{color:var(--on-glass-dim);max-width:280px}
+@keyframes sRot{0%,20%{transform:rotate(0)}55%,85%{transform:rotate(90deg)}100%{transform:rotate(0)}}
+#studio.rot .srot{display:flex}
+#studio.rot .regs,#studio.rot #sUndo,#studio.rot #sMenu,#studio.rot .sbot,#studio.rot .sgrow{visibility:hidden}
 #stage.narrow .stop{gap:6px}
 #stage.narrow .gbtn{width:42px;height:42px}
 #stage.narrow .regs{flex:1 1 auto;min-width:0;gap:2px}
@@ -484,6 +492,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <div id="studio" hidden aria-label="Měření, klepnutím zapíšete hodnotu"><div id="stage">
   <canvas id="sCanvas"></canvas>
+  <div class="srot" id="sRot" aria-live="polite">
+    <svg viewBox="-12 0 144 120" aria-hidden="true"><g class="ph"><rect x="38" y="16" width="44" height="88" rx="9"/><path d="M54 24h12"/></g><path class="ar" d="M116 36a50 50 0 0 1 0 48M112 82l4 4 4-5"/></svg>
+    <b>Otočte telefon na šířku</b>
+    <span>a přiložte ho napříč zády, středem na trny</span>
+  </div>
   <div class="scount" id="sCount" hidden></div>
   <div class="stop">
     <button class="gbtn glass" id="sBack" aria-label="Zpět na úvod"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -1369,6 +1382,9 @@ function studioUpdate() {
   if (STU.left && STU.upT && now - STU.upT > 800 && !scan.running) STU.force = false;
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
+  // held upright (long axis more vertical than the short one): no dial, just ask to turn the phone
+  const rot = want && !scan.running && !land && Math.abs(y) >= Math.abs(x);
+  if (rot !== STU.rot) { STU.rot = rot; $('#studio').classList.toggle('rot', rot); }
   if (want !== STU.on) {
     STU.on = want; $('#studio').hidden = !want; closeMenu();
     if (want) { M.state = 'away'; renderRegs(); } else renderResults();
@@ -1377,7 +1393,7 @@ function studioUpdate() {
 }
 $('#studio').addEventListener('click', e => {
   if (e.target.closest('button,.menu')) return;
-  if (scan.running) return;
+  if (scan.running || STU.rot) return;
   lockNow();
 });
 $('#sUndo').addEventListener('click', undoLast);
