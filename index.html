@@ -124,6 +124,35 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .simctl{display:grid;gap:8px;border:1px dashed var(--warn);border-radius:var(--r);padding:10px}
 input[type=range]{width:100%;accent-color:var(--accent)}
 
+/* ---------- složky pacientů ---------- */
+.fold,.exrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;color:var(--ink)}
+.fold:active,.exrow:active{background:var(--surface2)}
+.fic{width:46px;height:46px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;position:relative}
+.fic b{position:absolute;bottom:6px;font:600 .62rem var(--f-num);color:var(--accent)}
+.ft{flex:1;min-width:0;display:grid;gap:1px}
+.ft b{font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ft span{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fold svg.i:last-child,.exrow svg.i:last-child{color:var(--muted);width:18px;height:18px}
+.flist{display:grid;gap:8px}
+.exd{flex:none;width:62px;display:grid;line-height:1.2}
+.exd b{font:600 .95rem var(--f-num)}
+.exd span{font:500 .72rem var(--f-num);color:var(--muted)}
+.exv{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.rv{display:inline-flex;gap:4px;align-items:baseline;border-radius:8px;padding:3px 7px;background:var(--surface2);font:500 .78rem var(--f-num);white-space:nowrap}
+.rv i{font-style:normal;color:var(--muted)}
+.rv.ok{background:var(--ok-bg);color:var(--ok)} .rv.warn{background:var(--warn-bg);color:var(--warn)} .rv.bad{background:var(--bad-bg);color:var(--bad)}
+.rv.ok i,.rv.warn i,.rv.bad i{color:inherit;opacity:.75}
+.tag{display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:3px 7px;background:var(--accent-soft);color:var(--accent);font-size:.74rem;font-weight:600}
+.tag svg{width:13px;height:13px}
+.phead{display:flex;align-items:center;gap:12px}
+.phead .ft b{font-size:1.25rem}
+.search{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;min-height:46px}
+.badge{display:inline-block;border-radius:6px;padding:2px 7px;font-size:.72rem;font-weight:700;background:var(--warn-bg);color:var(--warn)}
+.pbtn{flex:none;width:52px;min-height:52px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--accent);display:grid;place-items:center;cursor:pointer;padding:0}
+.prow{display:flex;gap:8px}
+.prow .pfield{flex:1;min-width:0}
+.pfield small{display:block;font:500 .72rem var(--f-num);color:var(--muted)}
+
 /* ---------- stránky z menu ---------- */
 #page{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
 .view{display:grid;gap:12px;align-content:start}
@@ -216,7 +245,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <button class="xbtn" id="menuBtn" aria-label="Nabídka"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18.5" r="1.2"/></svg></button>
   </header>
   <main class="sbody" id="v-measure" aria-label="Výsledky vyšetření">
-    <button class="pfield" id="patientBtn" type="button"><span>Pacient</span><b id="patientName">Bez pacienta</b><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <div class="prow"><button class="pfield" id="patientBtn" type="button"><span>Pacient</span><b><span id="patientName" style="font-size:1rem;color:var(--ink)">Bez pacienta</span><small id="patientMeta"></small></b><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button><button class="pbtn" id="openFolder" type="button" aria-label="Otevřít složku pacienta"><svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button></div>
     <button class="go" id="goMeasure" type="button"><div class="ph"></div><span><b>Otočte telefon na šířku a měřte</b><small>Klepnutí na displej zapíše hodnotu, SKEN nahraje celou páteř.</small></span><i>Měřit</i></button>
     <div class="rlist" id="rList"></div>
     <div class="card" id="rScan"></div>
@@ -237,38 +266,39 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <section id="page" hidden>
   <header class="rhead"><button class="xbtn" id="pageBack" aria-label="Zpět"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><div class="t"><b id="pageTitle"></b></div></header>
   <div class="sbody" id="main">
-    <div id="v-scan" class="view" hidden>
+    <div id="v-patients" class="view" hidden>
+      <div class="row"><input class="search" id="pSearch" type="search" placeholder="Hledat pacienta" autocomplete="off" style="flex:1;width:auto"><button class="btn blue" id="newPatient2"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nový</button></div>
+      <div class="flist" id="plist"></div>
+    </div>
+    <div id="v-folder" class="view" hidden>
       <div class="card">
-        <div class="row" style="justify-content:space-between"><h3>Profil rotace C7 → S1</h3><span class="small muted" id="scanSource"></span></div>
+        <div class="phead"><div class="fic"><svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="ft"><b id="pdTitle"></b><span id="pdMeta"></span></div></div>
+        <button class="btn primary big" id="measurePatient"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2.5"/></svg>Měřit tohoto pacienta</button>
+      </div>
+      <div class="card" id="trendCard">
+        <div class="row" style="justify-content:space-between"><h3>Vývoj</h3><div class="legend"><span><i style="background:var(--s-th)"></i>Th</span><span><i style="background:var(--s-tl)"></i>Th‑L</span><span><i style="background:var(--s-l)"></i>L</span></div></div>
+        <div class="chartBox"><canvas id="trend"></canvas></div>
+        <p class="small muted">Nahoře P, dole L. Změna o 3° a víc mezi kontrolami je červeně, menší je v pásmu chyby měření.</p>
+      </div>
+      <h3 style="margin:4px 2px 0">Vyšetření <span class="muted num" id="exCount"></span></h3>
+      <div class="flist" id="exList"></div>
+      <div class="card">
+        <div class="rfrow"><button class="btn" id="copyReport">Kopírovat zprávu</button><button class="btn" id="shareReport">Sdílet zprávu</button></div>
+        <div class="rfrow"><button class="btn" id="exportCsv">Export CSV</button><button class="btn danger" id="delPatient">Smazat pacienta</button></div>
+      </div>
+    </div>
+    <div id="v-exam" class="view" hidden>
+      <div class="row" style="justify-content:space-between"><div class="ft"><b id="exTitle" style="font-size:1.15rem"></b><span id="exMeta"></span></div><span id="exBadge"></span></div>
+      <div class="rlist" id="exRegions"></div>
+      <div class="card" id="exScan">
+        <div class="row" style="justify-content:space-between"><h3>Sken páteře C7 → S1</h3><span class="small muted" id="scanSource"></span></div>
         <div class="chartBox" style="aspect-ratio:16/10"><canvas id="scanChart"></canvas></div>
-        <div class="peaks" id="peaks"><p class="small muted">Zatím bez skenu.</p></div>
+        <div class="peaks" id="peaks"></div>
       </div>
-      <div class="card prose small"><h3>Jak skenovat</h3><ul>
-        <li>Pacient v Adamsově předklonu. Telefon na šířku přiložte napříč zády u C7.</li>
-        <li>Stiskněte SKEN. Se samospouští máte 3 sekundy na usazení telefonu (délku změníte tlačítkem s hodinami).</li>
-        <li>Po pípnutí telefon plynule posuňte po trnech až ke kříži, asi 4–6 s. Zvednutím se sken ukončí sám.</li>
-        <li>Tón se zvyšuje s rotací a ozývá se ze strany hrbu. Sken najde vrcholy, rozhodující hodnotu změřte v místě vrcholu třemi přiloženími.</li></ul></div>
+      <div class="card" id="exNoteCard"><span class="label">Poznámka</span><p id="exNote"></p></div>
+      <div class="rfrow"><button class="btn" id="exCopy"><svg class="i" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Do karty</button><button class="btn" id="exShare">Sdílet zprávu</button></div>
+      <button class="btn danger" id="exDelete">Smazat vyšetření</button>
     </div>
-    <div id="v-patients" class="view" aria-label="Pacienti a vývoj" hidden>
-      <div class="card">
-        <div class="row" style="justify-content:space-between"><h2>Pacienti</h2><button class="btn" id="newPatient2">Nový pacient</button></div>
-        <ul class="plist" id="plist"></ul>
-      </div>
-      <div class="card" id="pDetail" hidden>
-        <div class="row" style="justify-content:space-between"><h2 id="pdTitle"></h2><span class="small muted" id="pdMeta"></span></div>
-        <div class="legend"><span><i style="background:var(--s-th)"></i>Hrudní</span><span><i style="background:var(--s-tl)"></i>Th‑L</span><span><i style="background:var(--s-l)"></i>Bederní</span><span class="muted">kladné = vpravo</span></div>
-        <div class="chartBox" style="aspect-ratio:16/9"><canvas id="trend"></canvas></div>
-        <div class="tableWrap"><table class="hist" id="hist"></table></div>
-        <p class="small muted">Změna o 3° a víc mezi kontrolami je zvýrazněna červeně. Menší rozdíly jsou v pásmu chyby opakovaného měření skoliometrem.</p>
-        <div class="row">
-          <button class="btn primary" id="copyReport">Kopírovat zprávu</button>
-          <button class="btn" id="shareReport">Sdílet zprávu</button>
-          <button class="btn" id="exportCsv">Export CSV</button>
-          <button class="btn danger" id="delPatient">Smazat pacienta</button>
-        </div>
-      </div>
-    </div>
-
     <div id="v-settings" class="view" aria-label="Nastavení" hidden>
       <div class="card">
         <h2>Kalibrace nuly</h2>
@@ -354,9 +384,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <button class="topt" data-a="measure" role="menuitem"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2.5"/></svg><span><b>Měřit</b><small>nebo otočte telefon na šířku</small></span></button>
   <button class="topt" data-a="results" role="menuitem"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10 8h4M10 12h4"/></svg><span><b>Výsledky</b><small>nebo otočte telefon na výšku</small></span></button>
   <button class="topt" data-a="patient" role="menuitem"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span><b>Pacient</b><small id="mPat">Bez pacienta</small></span></button>
-  <button class="topt" data-a="patients" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg><span><b>Pacienti a vývoj</b><small>historie, zpráva, export</small></span></button>
-  <button class="topt" data-a="scan" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M8 5c3 1 5 3 4 7s-3 6 0 9"/></svg><span><b>Profil skenu</b><small>křivka rotace C7 → S1</small></span></button>
-  <div class="msep"></div>
+  <button class="topt" data-a="patients" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg><span><b>Složky pacientů</b><small>všechna vyšetření, vývoj, zprávy</small></span></button>
+    <div class="msep"></div>
   <button class="topt" data-a="auto" role="menuitemcheckbox" aria-checked="false"><svg class="i ck" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg><span><b>Automatický zápis</b><small>po ustálení telefonu</small></span></button>
   <button class="topt" data-a="clear" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg><span><b>Smazat oblast</b><small id="mReg">hrudní</small></span></button>
   <button class="topt" data-a="settings" role="menuitem"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span><b>Nastavení a kalibrace</b><small>nula, strana, zvuk, prahy</small></span></button>
@@ -617,23 +646,29 @@ $('#sRegs').addEventListener('click', e => { const b = e.target.closest('.reg');
 const renderSummary = () => renderResults(), renderTrials = () => renderRegs();
 // portrait result card
 const LIM = 15;
-function renderResults() {
-  const ex = M.exam, prev = DB.current ? lastExam(DB.current) : null;
-  $('#examDate').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+// region result cards (home card and exam detail share them); trial chips are deletable only on the open exam
+function regionCards(ex, prev, editable) {
   const pos = v => 50 + clamp(v, -LIM, LIM) / LIM * 50;
   const w = ST.thrWarn / LIM * 50, r = ST.thrRef / LIM * 50;
   const zones = `linear-gradient(90deg,var(--bad-bg) 0 ${50 - r}%,var(--warn-bg) ${50 - r}% ${50 - w}%,var(--ok-bg) ${50 - w}% ${50 + w}%,var(--warn-bg) ${50 + w}% ${50 + r}%,var(--bad-bg) ${50 + r}% 100%)`;
-  $('#rList').innerHTML = RK.map(k => {
+  return RK.map(k => {
     const arr = ex.regions[k], st = stats(arr), c = st ? cls(st.m) : null;
     const ps = prev && prev.id !== ex.id ? stats(prev.regions[k]) : null;
     const head = st ? `<span class="val">${fmt(Math.abs(st.m))}°</span><span class="sd">${sideShort(st.m)}</span>` : `<span class="none">nezměřeno</span>`;
     const bar = `<div class="rbar"><div class="z" style="background:${zones}"></div><i class="c"></i>${arr.map(v => `<i class="t" style="left:${pos(v)}%"></i>`).join('')}${st ? `<i class="m ${c.k}" style="left:${pos(st.m)}%"></i>` : ''}</div><div class="rscale"><span>L ${LIM}°</span><span>0</span><span>${LIM}° P</span></div>`;
-    let meta = arr.map((v, i) => `<button class="tchip" data-r="${k}" data-i="${i}" aria-label="Smazat přiložení ${i + 1}">${fmt(Math.abs(v))}° ${sideShort(v)}</button>`).join('');
+    let meta = arr.map((v, i) => editable ? `<button class="tchip" data-r="${k}" data-i="${i}" aria-label="Smazat přiložení ${i + 1}">${fmt(Math.abs(v))}° ${sideShort(v)}</button>` : `<span class="tchip" style="cursor:default">${fmt(Math.abs(v))}° ${sideShort(v)}</span>`).join('');
     if (st && st.n > 1) meta += `<span class="delta">± ${fmt(st.sd)}°</span>`;
     if (st) meta += `<span class="pill ${c.k}"><span class="dot"></span>${c.t}</span>`;
     if (st && ps) { const d = st.m - ps.m; meta += `<span class="delta${Math.abs(d) >= 3 ? ' sig' : ''}">${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))}° od ${new Date(prev.date).toLocaleDateString('cs-CZ')}</span>`; }
     return `<div class="rr ${c ? c.k : ''}"><div class="top"><div class="nm"><b>${REG[k].name}</b><code>${REG[k].short}</code></div>${head}</div>${bar}<div class="rmeta">${meta}</div></div>`;
   }).join('');
+}
+// the saved exam just before this one, for the same patient
+function prevExam(ex, pid = ex.patientId || DB.current) { if (!pid) return null; return DB.exams.filter(e => e.patientId === pid && e.id !== ex.id && e.date < ex.date).sort((a, b) => b.date.localeCompare(a.date))[0] || null; }
+function renderResults() {
+  const ex = M.exam, prev = prevExam(ex, DB.current);
+  $('#examDate').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  $('#rList').innerHTML = regionCards(ex, prev, true);
   const sc = ex.scan;
   $('#rScan').innerHTML = sc
     ? `<div class="row" style="justify-content:space-between"><h3>Sken páteře</h3><button class="btn ghost" id="rScanOpen" style="min-height:36px">Detail</button></div><div class="chartBox" style="aspect-ratio:3/1"><canvas id="rScanChart"></canvas></div><p class="small muted">${scanSummaryText(sc)}</p>`
@@ -655,7 +690,7 @@ function drawMiniScan(sc) {
   ctx.fillStyle = css('--muted'); ctx.font = `600 10px ${css('--f-num')}`; ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('C7', 4, 2); ctx.textAlign = 'right'; ctx.fillText('S1', w - 4, 2);
   ctx.textBaseline = 'middle'; ctx.fillText('P', w - 4, Y(lim * .7)); ctx.fillText('L', w - 4, Y(-lim * .7));
 }
-$('#rScan').addEventListener('click', e => { if (e.target.closest('#rScanOpen') || e.target.closest('canvas')) show('scan'); });
+$('#rScan').addEventListener('click', e => { if (e.target.closest('#rScanOpen') || e.target.closest('canvas')) openExam(M.exam); });
 // two taps delete a single trial
 $('#rList').addEventListener('click', e => {
   const b = e.target.closest('.tchip'); if (!b) return;
@@ -676,8 +711,8 @@ function doSaveExam() {
   DB.exams.push(ex); DB.draft = null; save();
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].name} ${sayDeg(st.m)} ${sideWord(st.m)}` : null; }).filter(Boolean);
   say('Uloženo. ' + parts.join('. '));
-  toast(`Vyšetření uloženo k pacientovi ${curPatient().code}.`);
-  startNewExam(); renderPatients();
+  toast(`Uloženo do složky ${curPatient().code}.`);
+  startNewExam(); openFolder(DB.current, ex.id);
 }
 function startNewExam() { M.exam = newExam(); M.hist = []; DB.draft = null; save(); setRegion('th'); renderResults(); }
 let newArm = 0;
@@ -687,10 +722,10 @@ $('#newExamBtn').addEventListener('click', e => {
   startNewExam(); toast('Nové vyšetření.');
 });
 function examLine(ex) {
+  const prev = prevExam(ex);
   const parts = RK.map(k => { const st = stats(ex.regions[k]); return st ? `${REG[k].short} ${fmt(Math.abs(st.m))}° ${sideShort(st.m) || '0'}${st.n > 1 ? ` (±${fmt(st.sd)}, n=${st.n})` : ''}` : null; }).filter(Boolean);
   let t = `ATR (skoliometr, Adams) ${new Date(ex.date).toLocaleDateString('cs-CZ')}: ${parts.join(', ') || 'neměřeno'}`;
-  const prev = DB.current ? lastExam(DB.current) : null;
-  if (prev && prev.id !== ex.id) { const d = RK.map(k => { const a = stats(ex.regions[k]), b = stats(prev.regions[k]); return a && b ? `${REG[k].short} ${a.m - b.m >= 0 ? '+' : '−'}${fmt(Math.abs(a.m - b.m))}°` : null; }).filter(Boolean); if (d.length) t += `; změna od ${new Date(prev.date).toLocaleDateString('cs-CZ')}: ${d.join(', ')}`; }
+  if (prev) { const d = RK.map(k => { const a = stats(ex.regions[k]), b = stats(prev.regions[k]); return a && b ? `${REG[k].short} ${a.m - b.m >= 0 ? '+' : '−'}${fmt(Math.abs(a.m - b.m))}°` : null; }).filter(Boolean); if (d.length) t += `; změna od ${new Date(prev.date).toLocaleDateString('cs-CZ')}: ${d.join(', ')}`; }
   if (ex.scan) t += `; sken: ${scanSummaryText(ex.scan)}`;
   if (ex.note) t += `; ${ex.note}`;
   return t + '.';
@@ -757,7 +792,7 @@ function finishScan(auto) {
   if (!scan.running) return;
   clearInterval(scan.countIv); sonicStop(); scan.running = false; scan.phase = '';
   let d = scan.data; if (d.length) { const T = d[d.length - 1].t; d = d.filter(s => s.t > .15 && s.t < T - (auto ? .35 : .05)); }
-  if (d.length < 30) { toast('Sken byl příliš krátký. Posouvejte telefon plynule 4–6 sekund.'); drawScan(); return; }
+  if (d.length < 30) { toast('Sken byl příliš krátký. Posouvejte telefon plynule 4–6 sekund.'); return; }
   scan.result = analyzeScan(d); chord(); buzz([40, 60, 40]);
   const r = scan.result; const best = RK.map(k => r.peaks[k]).filter(Boolean).sort((x, y) => Math.abs(y.v) - Math.abs(x.v))[0];
   M.exam.scan = compactScan(r); saveDraft(); renderResults();
@@ -787,8 +822,9 @@ function scanSummaryText(r) {
   const parts = RK.map(k => r.peaks[k] ? `${REG[k].short} ${fmt(Math.abs(r.peaks[k].v))}° ${Math.abs(r.peaks[k].v) < .5 ? '' : r.peaks[k].v > 0 ? 'P' : 'L'} (${Math.round(r.peaks[k].x * 100)} %)` : null).filter(Boolean);
   return `max ${parts.join(', ')}${r.double ? ', dvojitý oblouk' : ''}`;
 }
-function renderScan() {
-  const r = scan.result; drawScan();
+function renderScan() { if (view === 'exam' && EXV.ex && EXV.ex.id === M.exam.id) renderExam(); }
+function renderScanDetail(r) {
+  drawScan(r);
   if (!r) return;
   $('#scanSource').textContent = 'poloha odhadnuta ze ' + r.source;
   let h = '';
@@ -797,10 +833,10 @@ function renderScan() {
   h += `<p class="small muted">Sken slouží k nalezení vrcholu. Rozhodující hodnotu změřte v místě vrcholu třemi přiloženími na šířku.</p>`;
   $('#peaks').innerHTML = h;
 }
-function drawScan() {
-  const c = $('#scanChart'); const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
+function drawScan(r = EXV.scan) {
+  const c = $('#scanChart'); if (!c || !c.offsetParent) return; const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
   const col = { ink: css('--ink'), muted: css('--muted'), line: css('--line'), s2: css('--surface2'), accent: css('--accent'), warn: css('--warn'), bad: css('--bad'), ok: css('--ok') };
-  const r = scan.result; const pts = r ? r.pts : null;
+  const pts = r ? r.pts : null;
   const lim = Math.max(10, Math.ceil((pts ? Math.max(...pts.map(s => Math.abs(s.a))) : 0) / 5) * 5 + 2);
   const L = 34, R = 10, Tp = 22, B = 26; const W = w - L - R, H = h - Tp - B;
   const X = x => L + x * W, Y = a => Tp + H / 2 - a / lim * H / 2;
@@ -820,7 +856,7 @@ function drawScan() {
 }
 
 /* ---------- patients ---------- */
-function renderHeader() { const p = curPatient(); $('#patientName').textContent = p ? p.code : 'Bez pacienta'; $('#mPat').textContent = p ? p.code : 'Bez pacienta'; }
+function renderHeader() { const p = curPatient(); $('#patientName').textContent = p ? p.code : 'Bez pacienta'; $('#mPat').textContent = p ? p.code : 'Bez pacienta'; const n = p ? DB.exams.filter(e => e.patientId === p.id).length : 0; $('#patientMeta').textContent = p ? (n ? `${n} vyšetření ve složce` : 'prázdná složka') : 'klepněte a vyberte'; }
 function lastExam(pid) { return DB.exams.filter(e => e.patientId === pid).sort((a, b) => b.date.localeCompare(a.date))[0]; }
 function examMax(ex) { let best = null; RK.forEach(k => { const st = stats(ex.regions[k]); if (st && (!best || Math.abs(st.m) > Math.abs(best))) best = st.m; }); return best; }
 function patientRow(p) {
@@ -829,33 +865,72 @@ function patientRow(p) {
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 let detailId = null;
-function renderPatients() {
-  const ps = [...DB.patients].sort((a, b) => a.code.localeCompare(b.code, 'cs'));
-  $('#plist').innerHTML = ps.length ? ps.map(patientRow).join('') : '<li class="small muted" style="padding:10px 0">Zatím žádní pacienti. Přidejte prvního tlačítkem Nový pacient.</li>';
-  if (!detailId && DB.current) detailId = DB.current;
-  renderDetail();
-}
-$('#plist').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (!b) return; detailId = b.dataset.id; DB.current = detailId; save(); renderHeader(); renderDetail(); renderResults(); });
 function examsOf(pid) { return DB.exams.filter(e => e.patientId === pid).sort((a, b) => a.date.localeCompare(b.date)); }
-function renderDetail() {
-  const p = patient(detailId); $('#pDetail').hidden = !p; if (!p) return;
-  $('#pdTitle').textContent = p.code; $('#pdMeta').textContent = [p.year ? 'nar. ' + p.year : '', p.sex === 'F' ? 'žena' : p.sex === 'M' ? 'muž' : '', p.note].filter(Boolean).join(' · ');
-  const ex = examsOf(p.id);
-  let h = '<tr><th>Datum</th><th>Hrudní</th><th>Th‑L</th><th>Bederní</th><th>Poznámka</th></tr>';
-  ex.slice().reverse().forEach((e, iRev) => {
-    const prev = ex[ex.length - 2 - iRev];
-    h += `<tr><td>${new Date(e.date).toLocaleDateString('cs-CZ')}</td>` + RK.map(k => {
-      const st = stats(e.regions[k]); if (!st) return '<td class="v muted">–</td>';
-      const ps = prev ? stats(prev.regions[k]) : null; let dl = '';
-      if (ps) { const dd = st.m - ps.m; dl = `<span class="delta ${Math.abs(dd) >= 3 ? 'sig' : 'muted'}">${dd >= 0 ? '+' : '−'}${fmt(Math.abs(dd))}</span>`; }
-      return `<td class="v">${fmt(Math.abs(st.m))}° ${Math.abs(st.m) < .5 ? '' : st.m > 0 ? 'P' : 'L'}${dl}</td>`;
-    }).join('') + `<td class="small">${esc(e.note || '')}${e.scan ? ' <span class="muted">· sken</span>' : ''}</td></tr>`;
-  });
-  if (!ex.length) h += '<tr><td colspan="5" class="muted small">Zatím bez vyšetření.</td></tr>';
-  $('#hist').innerHTML = h; drawTrend(ex);
+const dShort = d => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: '2-digit' }).replace(/\s/g, '');
+function rvChips(ex) { return RK.map(k => { const st = stats(ex.regions[k]); if (!st) return `<span class="rv"><i>${REG[k].short}</i>–</span>`; return `<span class="rv ${cls(st.m).k}"><i>${REG[k].short}</i>${fmt(Math.abs(st.m))}°${sideShort(st.m)}</span>`; }).join(''); }
+const SCAN_TAG = `<span class="tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20"/><path d="M8 5c3 1 5 3 4 7s-3 6 0 9"/></svg>sken</span>`;
+const CHEV = `<svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;
+const FOLDI = `<svg class="i" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>`;
+// patient list = folders
+function renderPatients() {
+  const q = ($('#pSearch').value || '').trim().toLowerCase();
+  const ps = DB.patients.filter(p => !q || (p.code + ' ' + (p.note || '') + ' ' + (p.year || '')).toLowerCase().includes(q))
+    .map(p => ({ p, le: lastExam(p.id), n: DB.exams.filter(e => e.patientId === p.id).length }))
+    .sort((a, b) => (b.le ? b.le.date : b.p.created || '').localeCompare(a.le ? a.le.date : a.p.created || ''));
+  $('#plist').innerHTML = ps.length ? ps.map(({ p, le, n }) => {
+    const mx = le ? examMax(le) : null, c = mx != null ? cls(mx) : null;
+    return `<button class="fold" data-id="${p.id}"><div class="fic">${FOLDI}</div><div class="ft"><b>${esc(p.code)}</b><span>${[p.year ? 'nar. ' + p.year : '', p.note ? esc(p.note) : ''].filter(Boolean).join(' · ') || '&nbsp;'}</span><span>${n ? `${n} vyšetření · naposledy ${new Date(le.date).toLocaleDateString('cs-CZ')}` : 'zatím bez vyšetření'}</span></div>${c ? `<span class="pill ${c.k}">${fmt(Math.abs(mx))}°</span>` : ''}${CHEV}</button>`;
+  }).join('') : `<p class="small muted" style="padding:8px 2px">${q ? 'Nic nenalezeno.' : 'Zatím žádní pacienti. Přidejte prvního tlačítkem Nový.'}</p>`;
 }
+$('#pSearch').addEventListener('input', renderPatients);
+$('#plist').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) openFolder(b.dataset.id); });
+// one patient's folder: trend + every exam (point measurements and scan together)
+let folderHi = null;
+function openFolder(pid, hiId) { if (!patient(pid)) { show('patients'); return; } detailId = pid; folderHi = hiId || null; show('folder'); }
+function renderDetail() {
+  const p = patient(detailId); if (!p) return;
+  $('#pageTitle').textContent = 'Složka pacienta';
+  $('#pdTitle').textContent = p.code; $('#pdMeta').textContent = [p.year ? 'nar. ' + p.year : '', p.sex === 'F' ? 'žena' : p.sex === 'M' ? 'muž' : '', p.note].filter(Boolean).join(' · ') || 'bez dalších údajů';
+  const ex = examsOf(p.id);
+  $('#exCount').textContent = ex.length ? `(${ex.length})` : '';
+  $('#trendCard').hidden = ex.length < 1;
+  $('#exList').innerHTML = ex.length ? ex.slice().reverse().map(e => {
+    const d = new Date(e.date);
+    return `<button class="exrow" data-ex="${e.id}"${e.id === folderHi ? ' style="border-color:var(--gold);box-shadow:0 0 0 2px var(--pt)"' : ''}><div class="exd"><b>${d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }).replace(/\s/g, '')}</b><span>${d.getFullYear()} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span></div><div class="exv">${rvChips(e)}${e.scan ? SCAN_TAG : ''}${e.note ? `<span class="small muted" style="width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.note)}</span>` : ''}</div>${CHEV}</button>`;
+  }).join('') : '<p class="small muted" style="padding:4px 2px">Zatím žádné vyšetření. Klepněte na Měřit tohoto pacienta.</p>';
+  if (ex.length) requestAnimationFrame(() => drawTrend(ex));
+}
+$('#exList').addEventListener('click', e => { const b = e.target.closest('[data-ex]'); if (!b) return; const ex = DB.exams.find(x => x.id === b.dataset.ex); if (ex) openExam(ex); });
+$('#measurePatient').addEventListener('click', () => {
+  DB.current = detailId; save(); renderHeader();
+  show('measure'); STU.force = true; STU.hold = false;
+});
+$('#openFolder').addEventListener('click', () => { if (DB.current) openFolder(DB.current); else show('patients'); });
+// exam detail (saved exam, or the open one when ex === M.exam)
+const EXV = { ex: null, scan: null };
+function openExam(ex) { EXV.ex = ex; show('exam'); }
+function renderExam() {
+  const ex = EXV.ex; if (!ex) return; const open = ex === M.exam, p = patient(ex.patientId || (open ? DB.current : null));
+  $('#pageTitle').textContent = p ? p.code : 'Vyšetření';
+  $('#exTitle').textContent = new Date(ex.date).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  $('#exMeta').textContent = 'ATR, Adamsův předklon' + (p ? ` · ${p.code}` : '');
+  $('#exBadge').innerHTML = open ? '<span class="badge">neuloženo</span>' : '';
+  $('#exRegions').innerHTML = regionCards(ex, prevExam(ex, ex.patientId || DB.current), false);
+  EXV.scan = ex.scan ? expandScan(ex.scan) : (open && scan.result ? scan.result : null);
+  $('#exScan').hidden = !EXV.scan; if (EXV.scan) requestAnimationFrame(() => renderScanDetail(EXV.scan));
+  $('#exNoteCard').hidden = !ex.note; $('#exNote').textContent = ex.note || '';
+  $('#exDelete').hidden = open; $('#exShare').hidden = open;
+}
+$('#exCopy').addEventListener('click', () => EXV.ex && copyText(examLine(EXV.ex)));
+$('#exShare').addEventListener('click', async () => { const t = reportText(EXV.ex.patientId, EXV.ex); try { if (navigator.share) { await navigator.share({ title: 'Skoliometr', text: t }); return; } } catch (e) { if (e.name === 'AbortError') return; } copyText(t); });
+let exDelArm = 0;
+$('#exDelete').addEventListener('click', e => {
+  const ex = EXV.ex; if (!ex || ex === M.exam) return;
+  if (Date.now() - exDelArm > 4000) { exDelArm = Date.now(); e.target.textContent = 'Opravdu smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat vyšetření', 4000); return; }
+  DB.exams = DB.exams.filter(x => x.id !== ex.id); save(); e.target.textContent = 'Smazat vyšetření'; toast('Vyšetření smazáno.'); back();
+});
 function drawTrend(ex) {
-  const c = $('#trend'); const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
+  const c = $('#trend'); if (!c.offsetParent) return; const { ctx, w, h } = fitCanvas(c); ctx.clearRect(0, 0, w, h);
   const col = { ink: css('--ink'), muted: css('--muted'), line: css('--line'), warn: css('--warn'), bad: css('--bad'), th: css('--s-th'), tl: css('--s-tl'), l: css('--s-l') };
   const L = 36, R = 12, Tp = 12, B = 24, W = w - L - R, H = h - Tp - B;
   const vals = ex.flatMap(e => RK.map(k => stats(e.regions[k])).filter(Boolean).map(s => Math.abs(s.m)));
@@ -876,8 +951,8 @@ function drawTrend(ex) {
   ctx.textAlign = 'left'; ctx.fillText(new Date(ex[0].date).toLocaleDateString('cs-CZ'), L, h - 6);
   if (ex.length > 1) { ctx.textAlign = 'right'; ctx.fillText(new Date(ex[ex.length - 1].date).toLocaleDateString('cs-CZ'), w - R, h - 6); }
 }
-function reportText(pid) {
-  const p = patient(pid); const ex = examsOf(pid); if (!ex.length) return null; const e = ex[ex.length - 1], prev = ex[ex.length - 2];
+function reportText(pid, one) {
+  const p = patient(pid); const ex = examsOf(pid); if (!p || !ex.length) return null; const e = one || ex[ex.length - 1], prev = prevExam(e, pid);
   const L = [];
   L.push('Skoliometrické vyšetření – úhel rotace trupu (ATR), Adamsův předklon');
   L.push(`Pacient: ${p.code}${p.year ? ', nar. ' + p.year : ''}${p.note ? ' (' + p.note + ')' : ''}`);
@@ -907,7 +982,7 @@ $('#delPatient').addEventListener('click', async e => {
   const p = patient(detailId); if (!p) return;
   if (Date.now() - delArm > 4000) { delArm = Date.now(); e.target.textContent = 'Opravdu smazat? Klepněte znovu'; setTimeout(() => e.target.textContent = 'Smazat pacienta', 4000); return; }
   DB.patients = DB.patients.filter(x => x.id !== p.id); DB.exams = DB.exams.filter(x => x.patientId !== p.id); if (DB.current === p.id) DB.current = null; detailId = null; save();
-  e.target.textContent = 'Smazat pacienta'; renderHeader(); renderPatients(); toast('Pacient smazán.');
+  e.target.textContent = 'Smazat pacienta'; renderHeader(); renderResults(); toast('Pacient smazán.'); back();
 });
 
 /* sheet */
@@ -922,7 +997,7 @@ $('#newPatient2').addEventListener('click', () => { openSheet(); setTimeout(() =
 $('#sheetClose').addEventListener('click', closeSheet);
 $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
 function selectPatient(id) {
-  DB.current = id || null; detailId = DB.current; save(); renderHeader(); renderPatients(); renderResults();
+  DB.current = id || null; save(); renderHeader(); renderResults(); if (view === 'patients') renderPatients();
   const ps = pendingSave; $('#sheet').hidden = true; pendingSave = false;
   if (ps && DB.current) doSaveExam();
 }
@@ -1042,19 +1117,24 @@ function handleCmd(t) {
 
 /* ---------- navigation ---------- */
 // 'measure' = home: studio (landscape) or the result card (portrait). Other views open as a full-screen page.
-let view = 'measure';
-const TITLES = { scan: 'Profil skenu', patients: 'Pacienti a vývoj', settings: 'Nastavení a kalibrace' };
-function show(v) {
-  closeMenu(); view = v;
-  ['scan', 'patients', 'settings'].forEach(k => $('#v-' + k).hidden = k !== v);
+let view = 'measure', STACK = [];
+const TITLES = { patients: 'Složky pacientů', folder: 'Složka pacienta', exam: 'Vyšetření', settings: 'Nastavení a kalibrace' };
+const VIEWS = ['patients', 'folder', 'exam', 'settings'];
+function show(v, isBack) {
+  closeMenu();
+  if (!isBack) { if (v === 'measure') STACK = []; else if (view !== 'measure' && view !== v) STACK.push(view); }
+  view = v;
+  VIEWS.forEach(k => $('#v-' + k).hidden = k !== v);
   $('#page').hidden = v === 'measure'; $('#pageTitle').textContent = TITLES[v] || '';
   if (v === 'patients') renderPatients();
-  if (v === 'scan') { if (!scan.result && M.exam.scan) scan.result = expandScan(M.exam.scan); requestAnimationFrame(() => scan.result ? renderScan() : drawScan()); }
+  if (v === 'folder') renderDetail();
+  if (v === 'exam') renderExam();
   if (v === 'settings') bindSettings();
-  if (v === 'measure') renderResults();
+  if (v === 'measure') { renderHeader(); renderResults(); }
   $('#main').scrollTop = 0;
 }
-$('#pageBack').addEventListener('click', () => { if (CAL.step) calStop(); show('measure'); });
+function back() { if (CAL.step) calStop(); show(STACK.pop() || 'measure', true); }
+$('#pageBack').addEventListener('click', back);
 
 /* ---------- menu ---------- */
 function openMenu() {
@@ -1198,7 +1278,7 @@ function loop() {
   if (studioUpdate()) drawStudio();
   requestAnimationFrame(loop);
 }
-window.addEventListener('resize', () => { if (view === 'patients') renderDetail(); if (view === 'scan') drawScan(); if (view === 'measure' && M.exam.scan) drawMiniScan(M.exam.scan); });
+window.addEventListener('resize', () => { if (view === 'folder') renderDetail(); if (view === 'exam') drawScan(); if (view === 'measure' && M.exam.scan) drawMiniScan(M.exam.scan); });
 
 let wake = null;
 async function keepAwake() { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
