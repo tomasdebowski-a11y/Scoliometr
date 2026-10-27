@@ -1362,10 +1362,10 @@ function studioUpdate() {
   const [x, y, z] = S.u, n = Math.hypot(x, y, z) || 1;
   const upright = !land && Math.abs(y) / n > .8;
   STU.upT = upright ? (STU.upT || now) : 0; STU.upright = upright;
-  // a forced studio ends when the phone comes back upright after it has been turned away from upright
-  if (STU.force && !upright) STU.left = true;
-  if (STU.left && STU.upT && now - STU.upT > 500 && !scan.running) STU.force = false;
-  const trig = land || p === 'edgeA' || p === 'edgeB';
+    const trig = land || p === 'edgeA' || p === 'edgeB';
+  // a forced studio ends only after the phone has really been used for measuring (landscape or on its edge) and then turned upright
+  if (STU.force && trig) STU.left = true;
+  if (STU.left && STU.upT && now - STU.upT > 800 && !scan.running) STU.force = false;
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
   if (want !== STU.on) {
