@@ -223,6 +223,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .stop{position:absolute;top:calc(10px + var(--st,0px));left:calc(10px + var(--sl,0px));right:calc(10px + var(--sr,0px));display:flex;gap:8px;align-items:center;pointer-events:none}
 .stop>*{pointer-events:auto}
 .sgrow{flex:1}
+#stage.narrow .stop{gap:6px}
+#stage.narrow .gbtn{width:42px;height:42px}
+#stage.narrow .regs{flex:1 1 auto;min-width:0;gap:2px}
+#stage.narrow .reg{flex:1;justify-content:center;padding:0 6px;height:38px}
+#stage.narrow .reg .d{display:none}
+#stage.narrow .sgrow{display:none}
 .regs{display:flex;gap:4px;padding:4px;border-radius:24px}
 .reg{display:flex;align-items:center;gap:7px;height:44px;padding:0 12px 0 14px;border-radius:20px;border:2px solid transparent;background:transparent;color:var(--on-glass-dim);font:600 .9rem var(--f-num);cursor:pointer}
 .reg .d{display:flex;gap:3px}
@@ -1319,7 +1325,7 @@ function studioUpdate() {
   const now = performance.now(), p = poseOf(), land = innerWidth > innerHeight;
   const [x, y, z] = S.u, n = Math.hypot(x, y, z) || 1;
   const upright = !land && Math.abs(y) / n > .8;
-  STU.upT = upright ? (STU.upT || now) : 0;
+  STU.upT = upright ? (STU.upT || now) : 0; STU.upright = upright;
   // a forced studio ends when the phone comes back upright after it has been turned away from upright
   if (STU.force && !upright) STU.left = true;
   if (STU.left && STU.upT && now - STU.upT > 500 && !scan.running) STU.force = false;
@@ -1364,6 +1370,7 @@ function layoutStage() {
     const cs = getComputedStyle($('#safeProbe')), ins = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
     const edge = (nx, ny) => { const ex = Math.round(nx * Math.cos(th) - ny * Math.sin(th)), ey = Math.round(nx * Math.sin(th) + ny * Math.cos(th)); return ex > 0 ? ins.r : ex < 0 ? ins.l : ey > 0 ? ins.b : ins.t; };
     STU.ins = { t: edge(0, -1), r: edge(1, 0), b: edge(0, 1), l: edge(-1, 0) };
+    $('#stage').classList.toggle('narrow', W - STU.ins.l - STU.ins.r < 600);
     s.setProperty('--st', edge(0, -1) + 'px'); s.setProperty('--sr', edge(1, 0) + 'px'); s.setProperty('--sb', edge(0, 1) + 'px'); s.setProperty('--sl', edge(-1, 0) + 'px');
   }
   return { th, W, H, a };
@@ -1394,7 +1401,7 @@ function drawStudio() {
   for (let d = -30; d <= 30; d++) {
     const major = d % 5 === 0, [x1, y1] = P(d / D, r0 - 4), [x2, y2] = P(d / D, r0 - (major ? 16 : 9));
     ctx.strokeStyle = major ? col.ink : col.muted; ctx.lineWidth = major ? 2 : 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    if (major) { const [lx, ly] = P(d / D, r0 - 30); ctx.fillStyle = d === 0 ? col.gold : col.ink; ctx.font = `600 ${clamp(H * .06, 12, 20)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(Math.abs(d)), lx, ly); }
+    if (major) { const [lx, ly] = P(d / D, r0 - 30); ctx.fillStyle = d === 0 ? col.gold : col.ink; ctx.font = `600 ${Math.min(clamp(H * .06, 12, 20), chord / 30)}px ${css('--f-num')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (chord > 420 || d % 10 === 0) ctx.fillText(String(Math.abs(d)), lx, ly); }
   }
   const plusLbl = sgn * sideFactor(pz) > 0 ? 'P' : 'L', minusLbl = plusLbl === 'P' ? 'L' : 'P';
   ctx.fillStyle = col.gold; ctx.font = `700 ${clamp(H * .09, 18, 30)}px ${css('--f-ui')}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
@@ -1409,7 +1416,7 @@ function drawStudio() {
   // big value
   const ry = y0 + tubeW + clamp(H * .16, 34, 80);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = M.state === 'locked' || rec ? col[c2.k] : col.ink;
-  ctx.font = `600 ${clamp(H * .22, 40, 104)}px ${css('--f-num')}`;
+  ctx.font = `600 ${Math.min(clamp(H * .22, 40, 104), W / 4.8)}px ${css('--f-num')}`;
   ctx.fillText(`${fmt(Math.abs(v))}°${Math.abs(v) < .5 ? '' : v > 0 ? ' P' : ' L'}`, 0, ry);
   const sub = ry + clamp(H * .14, 30, 64);
   ctx.font = `500 ${clamp(H * .05, 12, 16)}px ${css('--f-num')}`;
@@ -1436,7 +1443,7 @@ function drawStudio() {
   $('#sShutTxt').textContent = rec ? 'STOP' : cnt ? 'ZRUŠIT' : 'SKEN';
   const ce = $('#sCount'); ce.hidden = !cnt; if (cnt) ce.textContent = Math.max(1, Math.ceil((scan.countEnd - performance.now()) / 1000));
   $('#sTimerTxt').textContent = ST.scanDelay ? ST.scanDelay + ' s' : 'vyp'; $('#sTimer').setAttribute('aria-pressed', !!ST.scanDelay);
-  $('#sHint').textContent = cnt ? 'Usaďte telefon u C7. Klepnutím začnete hned.' : rec ? 'Zvednutím telefonu sken skončí' : ST.autoLock ? 'Hodnota se zapíše sama po ustálení, nebo klepněte' : 'Klepnutím kamkoli zapíšete hodnotu';
+  $('#sHint').textContent = STU.upright && !scan.running ? 'Otočte telefon na šířku a přiložte ho na záda' : cnt ? 'Usaďte telefon u C7. Klepnutím začnete hned.' : rec ? 'Zvednutím telefonu sken skončí' : ST.autoLock ? 'Hodnota se zapíše sama po ustálení, nebo klepněte' : 'Klepnutím kamkoli zapíšete hodnotu';
 }
 
 function loop() {
