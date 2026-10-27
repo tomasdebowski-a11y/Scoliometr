@@ -292,6 +292,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="row"><button class="btn primary" id="calBtn">Začít kalibraci</button><button class="btn ghost" id="calReset">Zrušit všechny kalibrace</button></div>
       </div>
       <div class="card">
+        <h2>Kalibrace úchopu (palce)</h2>
+        <p class="small muted">Když telefon při měření držíte palci za spodní hranu, leží na palcích, ne na trupu. Rozdílná výška palců posune měření vždy na stejnou stranu, asi o 1° na každé 2 mm. Postavte telefon na stůl na hranu a pusťte ho, aplikace si přečte hodnotu. Pak ho na stejném místě podložte palci přesně jako při měření a držte v klidu. Rozdíl je chyba úchopu a aplikace ji odečte. Opakuje se třikrát. Nejdřív proveďte kalibraci nuly.</p>
+        <p id="gripText"></p>
+        <div class="row"><button class="btn primary" id="gripBtn">Začít kalibraci úchopu</button><button class="btn ghost" id="gripReset">Zrušit kalibraci úchopu</button></div>
+      </div>
+      <div class="card">
         <h2>Jak držet telefon</h2>
         <svg class="diagram" viewBox="0 0 360 150" role="img" aria-label="Telefon leží napříč zády, fotoaparát ke zvolené straně pacienta">
           <path d="M30 120 C 90 40, 270 40, 330 120" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round"/>
@@ -512,7 +518,7 @@ function poseOf(u = S.u) { return u === S.u ? S.pose : classifyPose(u, null); }
 // Tilt of the phone's long axis (device y) from horizontal. Using the full |x,z| plane makes it
 // independent of leaning the phone toward or away from the examiner, and of spine inclination.
 function rawAngle(u = S.u, pose = poseOf(u)) { const [x, y, z] = u; const e = Math.atan2(y, Math.hypot(x, z)) * D; return pose === 'flat' ? e * Math.sign(z || 1) : e; }
-function devAngle() { const p = poseOf() || 'flat'; return rawAngle(S.u, p) - (ST.offsets[p] || 0); }          // + = camera end higher
+function devAngle() { const p = poseOf() || 'flat'; return rawAngle(S.u, p) - (ST.offsets[p] || 0) - ((ST.grip || {})[p] || 0); }          // + = camera end higher
 // Device-y sign of the end on the viewer's right when the phone stands on an edge with the screen
 // facing the examiner (left edge down -> top end points left). Independent of the platform's sign convention.
 function rightEnd(pose = poseOf()) { return pose === 'edgeA' ? -1 : 1; }
@@ -998,7 +1004,7 @@ function bindSettings() {
   ['thrWarn', 'thrRef'].forEach(k => $('#' + k).value = ST[k]);
   $('#smooth').value = ST.smooth; $('#stableMs').value = String(ST.stableMs);
   ['autoLock', 'sound', 'haptic', 'voice', 'voiceCmd'].forEach(k => $('#' + k).checked = !!ST[k]);
-  renderCal(); updateDiagram();
+  renderCal(); renderGrip(); updateDiagram();
 }
 function updateDiagram() { $('#dgCam').setAttribute('cx', ST.cameraRight ? 248 : 112); }
 $('#camSide').addEventListener('change', e => { ST.cameraRight = e.target.value === 'right'; save(); updateDiagram(); });
@@ -1047,7 +1053,7 @@ function calLoop() {
     if (pose === 'flat' && CAL.buf[0].z < 0) {
       // platform reports gravity with the opposite sign: fix it, and the edge zeros flip with it
       ST.platformSign *= -1; for (let i = 0; i < 3; i++) S.u[i] *= -1;
-      ['edgeA', 'edgeB'].forEach(k => { if (ST.offsets[k]) ST.offsets[k] *= -1; }); a = -a;
+      ['edgeA', 'edgeB'].forEach(k => { if (ST.offsets[k]) ST.offsets[k] *= -1; if (ST.grip && ST.grip[k]) ST.grip[k] *= -1; }); a = -a;
     }
     CAL.a1 = a; CAL.pose = pose; CAL.step = 2; CAL.moved = false; CAL.buf = []; beep(880, .1); buzz(50); say('Otočte telefon.'); renderCal(); return;
   }
@@ -1062,6 +1068,51 @@ $('#calBtn').addEventListener('click', () => {
   CAL.step = 1; CAL.buf = []; renderCal(); CAL.iv = setInterval(calLoop, 30);
 });
 $('#calReset').addEventListener('click', () => { ST.offsets = { flat: 0, edgeA: 0, edgeB: 0 }; ST.cal = {}; CAL.step = 0; save(); renderCal(); });
+// Grip calibration: difference between the phone standing on the table by itself and the same spot resting on the thumbs.
+// Table tilt and the phone's own zero cancel in the difference; three rounds give the grip's offset and its consistency.
+const GRIP = { step: '', pose: null, bare: 0, diffs: [], buf: [], iv: null, moved: false };
+const GRIP_MSG = { bare: 'Postavte telefon na hranu na stůl a pusťte ho…', toGrip: 'Teď ho na stejném místě podložte palci jako při měření a držte v klidu…', grip: 'Držte v klidu…', toBare: 'Dobře. Pusťte telefon a postavte ho znovu na stůl bez prstů…' };
+function renderGrip() {
+  const t = $('#gripText'), b = $('#gripBtn'); if (!ST.grip) ST.grip = {};
+  if (!GRIP.step) {
+    const done = ['edgeA', 'edgeB'].filter(k => ST.gripInfo && ST.gripInfo[k]);
+    t.innerHTML = done.length ? done.map(k => `<div class="peak"><span>${POSES[k][0].toUpperCase() + POSES[k].slice(1)}</span><span class="small">${esc(ST.gripInfo[k])}</span></div>`).join('') : '<span class="pill warn"><span class="dot"></span>úchop nekalibrován</span>';
+    b.textContent = 'Začít kalibraci úchopu'; return;
+  }
+  b.textContent = 'Zrušit';
+  t.innerHTML = `<span class="pill"><span class="dot"></span>${GRIP.diffs.length + 1}. ze 3: ${GRIP_MSG[GRIP.step]}</span>` + (GRIP.diffs.length ? `<p class="small muted" style="margin-top:6px">Zatím: ${GRIP.diffs.map(d => fmt(d, 2) + '°').join(', ')}</p>` : '');
+}
+function gripStop() { clearInterval(GRIP.iv); GRIP.iv = null; GRIP.step = ''; GRIP.buf = []; renderGrip(); }
+function gripLoop() {
+  const now = performance.now(), pose = poseOf();
+  if (GRIP.step === 'toGrip' || GRIP.step === 'toBare') {
+    if (S.gyro > 15) GRIP.moved = true;
+    if (GRIP.moved && pose === GRIP.pose && S.gyro < 6) { GRIP.step = GRIP.step === 'toGrip' ? 'grip' : 'bare'; GRIP.buf = []; renderGrip(); }
+    return;
+  }
+  const edge = pose === 'edgeA' || pose === 'edgeB';
+  if (!edge || (GRIP.pose && pose !== GRIP.pose) || S.gyro > 6) { GRIP.buf = []; return; }
+  GRIP.buf.push({ t: now, a: rawAngle(S.u, pose) }); while (now - GRIP.buf[0].t > 1300) GRIP.buf.shift();
+  if (now - GRIP.buf[0].t < 1200) return;
+  const st = stats(GRIP.buf.map(v => v.a)); if (st.sd > (GRIP.step === 'grip' ? .25 : .12)) return;
+  if (GRIP.step === 'bare') { GRIP.pose = pose; GRIP.bare = st.m; GRIP.step = 'toGrip'; GRIP.moved = false; beep(880, .1); buzz(50); say('Podložte palci.'); renderGrip(); return; }
+  GRIP.diffs.push(st.m - GRIP.bare); beep(988, .1); buzz(50);
+  if (GRIP.diffs.length < 3) { GRIP.step = 'toBare'; GRIP.moved = false; say('Znovu bez prstů.'); renderGrip(); return; }
+  const r = stats(GRIP.diffs); ST.grip[GRIP.pose] = r.m; if (!ST.gripInfo) ST.gripInfo = {};
+  const steady = r.sd <= .5;
+  ST.gripInfo[GRIP.pose] = `úchop ${fmt(Math.abs(r.m), 1)}°, rozptyl ±${fmt(r.sd, 1)}° ${steady ? '(stálý)' : '(nestálý)'} (${new Date().toLocaleDateString('cs-CZ')})`;
+  save(); chord(); buzz([40, 60, 40]);
+  say(`Úchop posouvá měření o ${sayDeg(r.m)}. ${steady ? 'Úchop je stálý.' : 'Úchop je nestálý, zkuste držet palce pokaždé stejně.'}`);
+  toast(steady ? `Úchop ${fmt(Math.abs(r.m))}° uložen, je stálý.` : `Úchop uložen, ale pokusy se liší o ±${fmt(r.sd)}°. Držte palce pokaždé stejně.`);
+  gripStop();
+}
+$('#gripBtn').addEventListener('click', () => {
+  if (GRIP.step) { gripStop(); return; }
+  if (CAL.step) calStop();
+  if (!S.has && !S.sim) { toast('Senzory nejsou spuštěné.'); return; }
+  Object.assign(GRIP, { step: 'bare', pose: null, diffs: [], buf: [], moved: false }); renderGrip(); GRIP.iv = setInterval(gripLoop, 30);
+});
+$('#gripReset').addEventListener('click', () => { ST.grip = {}; ST.gripInfo = {}; gripStop(); save(); toast('Kalibrace úchopu zrušena.'); });
 $('#exportAll').addEventListener('click', () => shareFile(`skoliometr-zaloha-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(DB), 'application/json'));
 $('#importAll').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return; const rd = new FileReader();
@@ -1117,7 +1168,7 @@ function show(v, isBack) {
   if (v === 'measure') { renderHeader(); renderResults(); }
   $('#main').scrollTop = 0;
 }
-function back() { if (CAL.step) calStop(); show(STACK.pop() || 'measure', true); }
+function back() { if (CAL.step) calStop(); if (GRIP.step) gripStop(); show(STACK.pop() || 'measure', true); }
 $('#pageBack').addEventListener('click', back);
 
 /* ---------- menu ---------- */
@@ -1281,6 +1332,6 @@ $('#startBtn').addEventListener('click', async () => {
 renderHeader(); setRegion('th'); renderResults(); bindSettings();
 requestAnimationFrame(loop);
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !/claude|anthropic/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__skolio = { S, M, ST, scan, analyzeScan, atr, spinePitch, show, DB: () => DB };
+window.__skolio = { S, M, ST, scan, GRIP, analyzeScan, atr, spinePitch, show, DB: () => DB };
 })();
 </script>
