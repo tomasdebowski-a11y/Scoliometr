@@ -737,6 +737,7 @@ function record(v) {
   const r = M.region, arr = M.exam.regions[r];
   if (arr.length >= 3) arr.shift();
   arr.push(Math.round(v * 10) / 10); M.hist.push(r);
+  STU.left = true;
   M.state = 'locked'; M.lockVal = v; M.stableStart = 0;
   chord(); buzz([35, 50, 35]);
   const st = stats(arr);
@@ -935,6 +936,7 @@ function finishScan(auto) {
   clearInterval(scan.countIv); sonicStop(); scan.running = false; scan.phase = '';
   let d = scan.data; if (d.length) { const T = d[d.length - 1].t; d = d.filter(s => s.t > .15 && s.t < T - (auto ? .35 : .05)); }
   if (d.length < 30) { toast('Sken byl příliš krátký. Posouvejte telefon plynule 4–6 sekund.'); return; }
+  STU.left = true;
   scan.result = analyzeScan(d); chord(); buzz([40, 60, 40]);
   const r = scan.result; const best = RK.map(k => r.peaks[k]).filter(Boolean).sort((x, y) => Math.abs(y.v) - Math.abs(x.v))[0];
   M.exam.scan = compactScan(r); saveDraft(); renderResults();
@@ -1379,8 +1381,7 @@ function studioUpdate() {
   const upright = !land && Math.abs(y) / n > .8;
   STU.upT = upright ? (STU.upT || now) : 0; STU.upright = upright;
     const trig = land || p === 'edgeA' || p === 'edgeB';
-  // a forced studio ends only after the phone has really been used for measuring (landscape or on its edge) and then turned upright
-  if (STU.force && trig) STU.left = true;
+  // opened by a button, the studio stays until something has been measured (then upright = results) or the back arrow
   if (STU.left && STU.upT && now - STU.upT > 800 && !scan.running) STU.force = false;
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
