@@ -42,7 +42,8 @@
   --s-th:#79a4f2; --s-tl:#b89deb; --s-l:#f0a06a; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+html{background:#0d1017}
+body{margin:0;background:#0d1017;color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{margin:0}
 h2{font-size:1.1rem;font-weight:700}
@@ -240,8 +241,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .srot b{font-size:1.35rem}.srot span{color:var(--on-glass-dim);max-width:280px}
 @keyframes sRot{0%,20%{transform:rotate(0)}55%,85%{transform:rotate(90deg)}100%{transform:rotate(0)}}
 #studio.rot .srot{display:flex}
-#stage{transition:opacity .18s}
-#studio.settle #stage{opacity:0;transition:none}
+
 #studio.rot .regs,#studio.rot #sUndo,#studio.rot #sMenu,#studio.rot .sbot,#studio.rot .sgrow{visibility:hidden}
 #stage.narrow .stop{gap:6px}
 #stage.narrow .gbtn{width:42px;height:42px}
@@ -1396,33 +1396,33 @@ $('#menu').addEventListener('click', e => {
 const STU = { on: false, force: false, hold: false, trig: false, upT: 0, th: null, key: '' };
 function studioUpdate() {
   const now = performance.now(), p = poseOf(), land = innerWidth > innerHeight;
-  const [x, y, z] = S.u, n = Math.hypot(x, y, z) || 1;
-  const upright = !land && Math.abs(y) / n > .8;
+  const [x, y, z] = S.u, n = Math.hypot(x, y, z) || 1, ax = Math.abs(x), ay = Math.abs(y);
+  // Gravity shows which side of the phone is up only when it is not lying flat; hysteresis keeps ~45° from flickering.
+  const flat = Math.abs(z) / n > .7;
+  if (!flat) { if (ay > ax * 1.3) STU.gUp = true; else if (ax > ay * 1.3) STU.gUp = false; }
+  if (STU.gUp === undefined) STU.gUp = !land;
+  // The screen turned by itself, so rotation lock is off: from then on turning is left to iOS.
+  // Remembered between launches; corrected when the screen did not turn after all.
+  if (STU.osRot === undefined) { try { STU.osRot = localStorage.getItem('skoliometr.osRot') === '1'; } catch (e) { STU.osRot = false; } }
+  const setOsRot = v => { if (STU.osRot !== v) { STU.osRot = v; try { localStorage.setItem('skoliometr.osRot', v ? '1' : '0'); } catch (e) {} } };
+  if (STU.lastLand !== undefined && land !== STU.lastLand) setOsRot(true); STU.lastLand = land;
+  // Measuring pose = phone on its long side. While the screen is still portrait, iOS may be about to turn it with its
+  // own animation; drawing the dial rotated before that would turn it twice. So wait, and rotate it ourselves only
+  // when the screen does not turn (rotation lock on).
+  const side = land || (!flat && !STU.gUp);
+  if (side && !land) { if (!STU.sideT) STU.sideT = now; } else STU.sideT = 0;
+  STU.sideOk = land || (STU.sideT > 0 && now - STU.sideT > (STU.osRot ? 2500 : 600));
+  if (STU.osRot && STU.sideT && now - STU.sideT > 2500) setOsRot(false);
+  const upright = !land && !flat && STU.gUp;
   STU.upT = upright ? (STU.upT || now) : 0; STU.upright = upright;
-    const trig = land || p === 'edgeA' || p === 'edgeB';
+  const trig = land || p === 'edgeA' || p === 'edgeB';
   // opened by a button, the studio stays until something has been measured (then upright = results) or the back arrow
   if (STU.left && STU.upT && now - STU.upT > 800 && !scan.running) STU.force = false;
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
-  // held upright (long axis more vertical than the short one): no dial, just ask to turn the phone
-  // gravity tells up from down only when the phone is not lying flat; with hysteresis so ~45° does not flicker
-  const flat = Math.abs(z) / n > .7, ax = Math.abs(x), ay = Math.abs(y);
-  if (!flat) { if (ay > ax * 1.3) STU.gUp = true; else if (ax > ay * 1.3) STU.gUp = false; }
-  if (STU.gUp === undefined) STU.gUp = !land;
-  const rot = want && !scan.running && !land && STU.gUp;
-  if (rot !== STU.rot) { STU.rot = rot; STU.settleT = now; $('#studio').classList.toggle('rot', rot); }
-  // while the screen or the stage is turning, iOS reports size, angle and gravity out of step for a moment:
-  // keep the stage hidden until they agree, so it never flashes upside down
-  const sig = `${innerWidth}x${innerHeight}a${screenAngle()}`;
-  if (sig !== STU.sig) { STU.sig = sig; STU.settleT = now; }
-  // phone turned sideways but the screen still portrait: iOS may be about to rotate the whole screen with its own
-  // animation, which would turn our already-rotated stage once more. Wait for it; with rotation locked it never comes.
-  if (want && !land && !STU.gUp && !flat && !scan.running) { if (!STU.pendT) STU.pendT = now; } else STU.pendT = 0;
-  // once the screen has been seen rotating (rotation lock off), wait for iOS much longer before drawing it ourselves
-  if (STU.lastLand !== undefined && land !== STU.lastLand) STU.osRot = true; STU.lastLand = land;
-  const pend = STU.pendT && now - STU.pendT < (STU.osRot ? 2500 : 700);
-  const settle = want && (pend || now - (STU.settleT || 0) < 450);
-  if (settle !== STU.settle) { STU.settle = settle; $('#studio').classList.toggle('settle', settle); }
+  // until the dial can be shown the right way round, the studio only asks to turn the phone
+  const rot = want && !scan.running && !STU.sideOk;
+  if (rot !== STU.rot) { STU.rot = rot; $('#studio').classList.toggle('rot', rot); }
   if (want !== STU.on) {
     STU.on = want; $('#studio').hidden = !want; closeMenu();
     if (want) { M.state = 'away'; renderRegs(); } else renderResults();
@@ -1451,12 +1451,13 @@ $('#sTimer').addEventListener('click', () => {
 function layoutStage() {
   const a = screenAngle() / D, [ux, uy, uz] = S.u, n = Math.hypot(ux, uy, uz) || 1;
   const sx = ux * Math.cos(a) - uy * Math.sin(a), sy = ux * Math.sin(a) + uy * Math.cos(a);
-  if (Math.hypot(sx, sy) / n > .72) { const raw = Math.atan2(sx, sy), q = Math.PI / 2, cand = Math.round(raw / q) * q; if (STU.th == null || Math.abs(raw - cand) < 35 / D) STU.th = cand; }
+  // screen already landscape, or the turn prompt: no rotation of our own; otherwise follow gravity in 90° steps
+  if (innerWidth > innerHeight || STU.rot) STU.th = 0;
+  else if (Math.hypot(sx, sy) / n > .72) { const raw = Math.atan2(sx, sy), q = Math.PI / 2, cand = Math.round(raw / q) * q; if (STU.th == null || Math.abs(raw - cand) < 35 / D) STU.th = cand; }
   if (STU.th == null) STU.th = 0;
   const th = STU.th, swap = Math.abs(Math.sin(th)) > .5, W = swap ? innerHeight : innerWidth, H = swap ? innerWidth : innerHeight;
   const key = `${W}x${H}r${th.toFixed(2)}`;
   if (key !== STU.key) {
-    if (STU.key) STU.settleT = performance.now();
     STU.key = key; const s = $('#stage').style; s.width = W + 'px'; s.height = H + 'px'; s.transform = `translate(-50%,-50%) rotate(${th}rad)`;
     // notch and home indicator: map the screen's safe-area insets onto the rotated stage's edges
     const cs = getComputedStyle($('#safeProbe')), ins = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
