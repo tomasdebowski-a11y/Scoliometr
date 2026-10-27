@@ -706,7 +706,8 @@ function onBack(a, p) { const [x, y, z] = S.u; const n = Math.hypot(x, y, z) || 
 function tick(now) {
   const a = atr(), p = spinePitch();
   if (scan.running) scanTick(now, a, p);
-  if (view !== 'measure') return;
+  // values are taken only on the measuring screen with the phone sideways, never on the home or results screen
+  if (view !== 'measure' || !STU.on || STU.rot) { M.state = 'away'; M.stableStart = 0; return; }
   M.buf.push({ t: now, a }); while (M.buf.length && now - M.buf[0].t > 3000) M.buf.shift();
   const placed = onBack(a, p);
   if (M.state === 'locked') {
@@ -750,6 +751,7 @@ function record(v) {
   saveDraft(); renderResults();
 }
 function lockNow() {
+  if (!STU.on || STU.rot) return;
   const now = performance.now(); const vals = M.buf.filter(s => now - s.t < 500).map(s => s.a);
   if (!vals.length) { toast('Žádná data ze senzoru.'); return; }
   record(vals.reduce((x, y) => x + y, 0) / vals.length);
