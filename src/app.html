@@ -66,7 +66,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .rhead .t{flex:1;min-width:0;display:grid;line-height:1.2}
 .rhead .t b{font-size:1.05rem}
 .rhead .t span{font:500 .75rem var(--f-num);color:var(--muted)}
-.sbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px max(14px,env(safe-area-inset-right,0px)) 18px max(14px,env(safe-area-inset-left,0px));display:grid;gap:12px;align-content:start}
+.sbody{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px max(14px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));display:grid;gap:12px;align-content:start}
 .sbody>*{max-width:680px;width:100%;margin:0 auto}
 .pfield{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 10px 0 14px;min-height:52px;cursor:pointer;text-align:left}
 .pfield span{font-size:.85rem;color:var(--muted);flex:none}
@@ -123,6 +123,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .hero svg{width:100%;max-width:400px;max-height:36vh;height:auto;display:block}
 .iconbtn{width:40px;height:40px;border-radius:20px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
 .iconbtn svg{width:20px;height:20px}
+@media (max-height:500px){.hero svg{max-height:26vh}.hero figcaption{display:none}.home{gap:8px}.hbtn.primary{min-height:52px}.hbtn{min-height:46px}}
 .hero figcaption{font-size:.85rem;color:var(--on-glass-dim);letter-spacing:.02em}
 .cur{border-radius:18px;padding:14px;display:grid;gap:10px;background:rgba(245,201,92,.08);border:1.5px solid rgba(245,201,92,.55)}
 .cur .lbl{font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--pt)}
@@ -206,7 +207,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 #stage{position:absolute;left:50%;top:50%;transform-origin:50% 50%}
 #sCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .glass{background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--glass-line);color:var(--on-glass)}
-.stop{position:absolute;top:10px;left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:center;pointer-events:none}
+.stop{position:absolute;top:calc(10px + var(--st,0px));left:calc(10px + var(--sl,0px));right:calc(10px + var(--sr,0px));display:flex;gap:8px;align-items:center;pointer-events:none}
 .stop>*{pointer-events:auto}
 .sgrow{flex:1}
 .regs{display:flex;gap:4px;padding:4px;border-radius:24px}
@@ -218,7 +219,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .reg.done:not(.cur){color:var(--pt)}
 .gbtn{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none;padding:0}
 .gbtn:active,.reg:active{background:rgba(255,255,255,.22)}
-.sbot{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:12px;display:flex;align-items:flex-end;gap:10px;pointer-events:none}
+.sbot{position:absolute;left:calc(12px + var(--sl,0px));right:calc(12px + var(--sr,0px));bottom:calc(12px + var(--sb,0px));display:flex;align-items:flex-end;gap:10px;pointer-events:none}
 .sbot>*{pointer-events:auto}
 .tbtn{height:48px;border-radius:24px;padding:0 14px 0 10px;display:flex;align-items:center;gap:6px;font:600 .85rem var(--f-num);cursor:pointer}
 .tbtn[aria-pressed="true"]{color:var(--pt)}
@@ -234,7 +235,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 /* ---------- nabídka, listy, toast ---------- */
 .menu{position:absolute;z-index:45;top:calc(64px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:min(290px,calc(100% - 20px));max-height:calc(100% - 80px);overflow:auto;padding:8px;border-radius:20px;background:#1a2030;border:1px solid rgba(255,255,255,.18);box-shadow:0 18px 40px rgba(0,0,0,.5);display:grid;gap:4px;color:#fff}
-#stage .menu{top:64px}
+#stage .menu{top:calc(64px + var(--st,0px));right:calc(10px + var(--sr,0px));max-height:calc(100% - 76px - var(--st,0px) - var(--sb,0px))}
+#safeProbe{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 .topt{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 12px;border-radius:14px;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer;width:100%}
 .topt:active{background:rgba(255,255,255,.1)}
 .topt span{flex:1;display:grid;gap:1px;min-width:0}
@@ -243,7 +245,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .topt .ck{color:var(--pt);stroke-width:2.4;visibility:hidden}
 .topt[aria-checked="true"] .ck{visibility:visible}
 .msep{height:1px;background:rgba(255,255,255,.12);margin:2px 8px}
-.overlay{position:fixed;inset:0;background:rgba(5,8,14,.55);z-index:50;display:grid;place-items:center;padding:16px;overflow:auto}
+.overlay{position:fixed;inset:0;background:rgba(5,8,14,.55);z-index:50;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));overflow:auto}
 .sheetBox{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;width:min(520px,100%);display:grid;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);max-height:calc(100% - 24px);overflow:auto}
 #startOverlay{background:var(--stage);color:#fff}
 #startOverlay .sheetBox{background:transparent;border:0;box-shadow:none;color:#fff}
@@ -440,6 +442,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <canvas id="sCanvas"></canvas>
   <div class="scount" id="sCount" hidden></div>
   <div class="stop">
+    <button class="gbtn glass" id="sBack" aria-label="Zpět na úvod"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="regs glass" id="sRegs"></div>
     <span class="sgrow"></span>
     <button class="gbtn glass" id="sUndo" aria-label="Vrátit poslední zápis"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
@@ -481,6 +484,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<div id="safeProbe" aria-hidden="true"></div>
 <div class="overlay" id="sheet" hidden>
   <div class="sheetBox">
     <div class="row" style="justify-content:space-between"><h2 id="sheetTitle">Pacient</h2><button class="iconbtn" id="sheetClose" aria-label="Zavřít"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1318,6 +1322,10 @@ $('#studio').addEventListener('click', e => {
   lockNow();
 });
 $('#sUndo').addEventListener('click', undoLast);
+$('#sBack').addEventListener('click', () => {
+  if (scan.running) { if (scan.phase === 'count') scanCancel(); else finishScan(false); }
+  STU.hold = true; STU.force = false; studioUpdate();
+});
 $('#sShutter').addEventListener('click', () => {
   if (!scan.running) scanBegin();
   else if (scan.phase === 'count') scanCancel();
@@ -1334,7 +1342,14 @@ function layoutStage() {
   if (STU.th == null) STU.th = 0;
   const th = STU.th, swap = Math.abs(Math.sin(th)) > .5, W = swap ? innerHeight : innerWidth, H = swap ? innerWidth : innerHeight;
   const key = `${W}x${H}r${th.toFixed(2)}`;
-  if (key !== STU.key) { STU.key = key; const s = $('#stage').style; s.width = W + 'px'; s.height = H + 'px'; s.transform = `translate(-50%,-50%) rotate(${th}rad)`; }
+  if (key !== STU.key) {
+    STU.key = key; const s = $('#stage').style; s.width = W + 'px'; s.height = H + 'px'; s.transform = `translate(-50%,-50%) rotate(${th}rad)`;
+    // notch and home indicator: map the screen's safe-area insets onto the rotated stage's edges
+    const cs = getComputedStyle($('#safeProbe')), ins = { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 };
+    const edge = (nx, ny) => { const ex = Math.round(nx * Math.cos(th) - ny * Math.sin(th)), ey = Math.round(nx * Math.sin(th) + ny * Math.cos(th)); return ex > 0 ? ins.r : ex < 0 ? ins.l : ey > 0 ? ins.b : ins.t; };
+    STU.ins = { t: edge(0, -1), r: edge(1, 0), b: edge(0, 1), l: edge(-1, 0) };
+    s.setProperty('--st', edge(0, -1) + 'px'); s.setProperty('--sr', edge(1, 0) + 'px'); s.setProperty('--sb', edge(0, 1) + 'px'); s.setProperty('--sl', edge(-1, 0) + 'px');
+  }
   return { th, W, H, a };
 }
 function drawStudio() {
@@ -1344,12 +1359,13 @@ function drawStudio() {
   const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const col = { bg: '#0d1017', ink: '#ffffff', muted: 'rgba(255,255,255,.62)', faint: 'rgba(255,255,255,.14)', ok: '#3dff6e', warn: '#ffd23d', bad: '#ff5a4e', gold: '#f5c95c' };
   ctx.fillStyle = col.bg; ctx.fillRect(0, 0, w, h);
-  ctx.save(); ctx.translate(w / 2, h / 2);
+  const si = STU.ins || { t: 0, r: 0, b: 0, l: 0 };
+  ctx.save(); ctx.translate(w / 2 + (si.l - si.r) / 2, h / 2);
   // which device end lies at the dial's +X: compare with device +y in screen coords
   const dyC = [-Math.sin(a), -Math.cos(a)], bx = [Math.cos(th), Math.sin(th)];
   const pz = poseOf(); const sgn = (pz === 'edgeA' || pz === 'edgeB') ? rightEnd(pz) : ((dyC[0] * bx[0] + dyC[1] * bx[1]) >= 0 ? 1 : -1);
   // dial: shallow arc, concave up, like the Bunnell scoliometer face
-  const W = w, H = h - 150; const cyOff = -10;
+  const W = w - si.l - si.r, H = h - 150; const cyOff = -10;
   const chord = W * .84, span = Math.min(22 / D, 2 * Math.atan(2 * H * .2 / chord)), K = span / (32 / D), Rt = chord / 2 / Math.sin(span);
   const tubeW = clamp(H * .085, 16, 32), y0 = cyOff - H * .02, cy = y0 - Rt;
   const P = (phi, r = Rt) => [r * Math.sin(phi * K), cy + r * Math.cos(phi * K)];
