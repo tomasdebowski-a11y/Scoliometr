@@ -1405,7 +1405,11 @@ function studioUpdate() {
   if (trig && !STU.trig) STU.hold = false; STU.trig = trig;
   const want = view === 'measure' && $('#sheet').hidden && !STU.hold && (trig || STU.force || scan.running);
   // held upright (long axis more vertical than the short one): no dial, just ask to turn the phone
-  const rot = want && !scan.running && !land && Math.abs(y) >= Math.abs(x);
+  // gravity tells up from down only when the phone is not lying flat; with hysteresis so ~45° does not flicker
+  const flat = Math.abs(z) / n > .7, ax = Math.abs(x), ay = Math.abs(y);
+  if (!flat) { if (ay > ax * 1.3) STU.gUp = true; else if (ax > ay * 1.3) STU.gUp = false; }
+  if (STU.gUp === undefined) STU.gUp = !land;
+  const rot = want && !scan.running && !land && STU.gUp;
   if (rot !== STU.rot) { STU.rot = rot; STU.settleT = now; $('#studio').classList.toggle('rot', rot); }
   // while the screen or the stage is turning, iOS reports size, angle and gravity out of step for a moment:
   // keep the stage hidden until they agree, so it never flashes upside down
@@ -1413,8 +1417,7 @@ function studioUpdate() {
   if (sig !== STU.sig) { STU.sig = sig; STU.settleT = now; }
   // phone turned sideways but the screen still portrait: iOS may be about to rotate the whole screen with its own
   // animation, which would turn our already-rotated stage once more. Wait for it; with rotation locked it never comes.
-  const gravLand = Math.abs(x) > Math.abs(y);
-  if (want && !land && gravLand && !scan.running) { if (!STU.pendT) STU.pendT = now; } else STU.pendT = 0;
+  if (want && !land && !STU.gUp && !flat && !scan.running) { if (!STU.pendT) STU.pendT = now; } else STU.pendT = 0;
   // once the screen has been seen rotating (rotation lock off), wait for iOS much longer before drawing it ourselves
   if (STU.lastLand !== undefined && land !== STU.lastLand) STU.osRot = true; STU.lastLand = land;
   const pend = STU.pendT && now - STU.pendT < (STU.osRot ? 2500 : 700);
@@ -1448,7 +1451,7 @@ $('#sTimer').addEventListener('click', () => {
 function layoutStage() {
   const a = screenAngle() / D, [ux, uy, uz] = S.u, n = Math.hypot(ux, uy, uz) || 1;
   const sx = ux * Math.cos(a) - uy * Math.sin(a), sy = ux * Math.sin(a) + uy * Math.cos(a);
-  if (Math.hypot(sx, sy) / n > .5) { const raw = Math.atan2(sx, sy), q = Math.PI / 2, cand = Math.round(raw / q) * q; if (STU.th == null || Math.abs(raw - cand) < 35 / D) STU.th = cand; }
+  if (Math.hypot(sx, sy) / n > .72) { const raw = Math.atan2(sx, sy), q = Math.PI / 2, cand = Math.round(raw / q) * q; if (STU.th == null || Math.abs(raw - cand) < 35 / D) STU.th = cand; }
   if (STU.th == null) STU.th = 0;
   const th = STU.th, swap = Math.abs(Math.sin(th)) > .5, W = swap ? innerHeight : innerWidth, H = swap ? innerWidth : innerHeight;
   const key = `${W}x${H}r${th.toFixed(2)}`;
